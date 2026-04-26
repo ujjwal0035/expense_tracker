@@ -11,7 +11,7 @@ export default function Layout() {
 
   return (
     <DashboardProvider>
-      <div className="min-h-screen bg-slate-50">
+      <div className="min-h-screen transition-colors duration-300" style={{ backgroundColor: 'var(--color-bg-primary)' }}>
         <TopBar />
         <div className="flex justify-center">
           <main className="w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-16">

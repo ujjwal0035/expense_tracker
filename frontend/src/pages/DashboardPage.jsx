@@ -58,24 +58,25 @@ export default function DashboardPage() {
       {/* Page Header */}
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6" style={{ marginTop: "20px" }}>
         <div style={{ marginBottom: "20px" }}>
-          <h1 className="text-3xl font-bold text-slate-800">Home Dashboard</h1>
-          <p className="text-slate-500">Overview of your recent spending</p>
+          <h1 className="text-3xl font-bold" style={{ color: 'var(--color-text-primary)' }}>Home Dashboard</h1>
+          <p style={{ color: 'var(--color-text-secondary)' }}>Overview of your recent spending</p>
         </div>
 
         <div className="flex flex-wrap items-center gap-4">
           <Space size="middle">
             <RangePicker
-              className="h-[46px] rounded-xl border-slate-200 shadow-sm"
+              className="h-[46px] rounded-xl shadow-sm"
+              style={{ backgroundColor: 'var(--color-bg-primary)', borderColor: 'var(--color-border)' }}
               value={dateRange.startDate ? [dayjs(dateRange.startDate), dayjs(dateRange.endDate)] : null}
               onChange={handleDateChange}
               format="DD MMM, YYYY"
             />
             <Button
-              className="h-[46px] rounded-xl font-semibold px-6 border-slate-200"
+              className="h-[46px] rounded-xl font-semibold px-6"
               onClick={clearFilters}
               size='large'
               type={!dateRange.startDate ? "primary" : "default"}
-              style={!dateRange.startDate ? { background: '#6c63ff', borderColor: '#6c63ff' } : {}}
+              style={!dateRange.startDate ? { background: '#6c63ff', borderColor: '#6c63ff' } : { borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
             >
               All Time
             </Button>
@@ -86,7 +87,7 @@ export default function DashboardPage() {
             icon={<Plus size={18} />}
             size='large'
             onClick={() => setShowAddModal(true)}
-            className="h-[46px] rounded-xl font-bold flex items-center gap-2 px-6"
+            className="h-[46px] rounded-xl font-bold flex items-center gap-2 px-6 shadow-lg shadow-[#6c63ff]/20"
             style={{ background: '#6c63ff', borderColor: '#6c63ff' }}
           >
             Add Expense

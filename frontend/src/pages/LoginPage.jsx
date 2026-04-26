@@ -11,10 +11,13 @@ import {
   WalletFilled,
   ThunderboltFilled,
   SafetyCertificateFilled,
-  PieChartFilled
+  PieChartFilled,
+  SunOutlined,
+  MoonOutlined
 } from '@ant-design/icons';
 import toast from 'react-hot-toast';
 import api from '../services/api';
+import { useTheme } from '../context/ThemeContext';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -23,6 +26,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [form] = Form.useForm();
   const navigate = useNavigate();
+  const { isDarkMode, toggleTheme } = useTheme();
 
   const handleSubmit = async (values) => {
     setLoading(true);
@@ -65,7 +69,21 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex bg-[#f8fafc]">
+    <div className="min-h-screen flex transition-colors duration-300" style={{ backgroundColor: 'var(--color-bg-primary)' }}>
+      {/* Theme Toggle for Login Page */}
+      <div className="absolute top-8 right-8 z-50">
+        <Button 
+          shape="circle" 
+          icon={isDarkMode ? <SunOutlined /> : <MoonOutlined />} 
+          onClick={toggleTheme}
+          style={{ 
+            backgroundColor: 'var(--color-bg-card)', 
+            borderColor: 'var(--color-border)',
+            color: 'var(--color-text-primary)'
+          }}
+        />
+      </div>
+
       {/* Left Panel - Hero Branding */}
       <div className="hidden lg:flex lg:w-1/2 flex-col justify-center items-center p-12 relative bg-[#6c63ff] overflow-hidden">
         {/* Background blobs */}
@@ -111,19 +129,23 @@ export default function LoginPage() {
               <div className="bg-[#6c63ff]/10 p-5 rounded-3xl inline-block mb-4">
                 <WalletFilled style={{ fontSize: 40, color: '#6c63ff' }} />
               </div>
-              <Title level={2} style={{ marginBottom: 0 }}>ExpenseIQ</Title>
+              <Title level={2} style={{ marginBottom: 0, color: 'var(--color-text-primary)' }}>ExpenseIQ</Title>
             </Space>
           </div>
 
           <Card 
             className="rounded-[40px] shadow-2xl border-none p-4 sm:p-8"
-            style={{ boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.05)' }}
+            style={{ 
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.05)',
+              backgroundColor: 'var(--color-bg-card)',
+              borderColor: 'var(--color-border)'
+            }}
           >
             <div className="mb-10 text-center sm:text-left">
-              <Title level={2} style={{ marginBottom: '8px', fontWeight: 800 }}>
+              <Title level={2} style={{ marginBottom: '8px', fontWeight: 800, color: 'var(--color-text-primary)' }}>
                 {isRegister ? 'Create Account' : 'Welcome Back'}
               </Title>
-              <Text type="secondary" style={{ fontSize: '16px' }}>
+              <Text style={{ fontSize: '16px', color: 'var(--color-text-secondary)' }}>
                 {isRegister 
                   ? 'Join thousands of users tracking their wealth.' 
                   : 'Log in to your account to continue.'}
@@ -143,39 +165,39 @@ export default function LoginPage() {
                     <Col xs={24} sm={12}>
                       <Form.Item
                         name="fullName"
-                        label={<Text strong className="text-slate-600">Full Name</Text>}
+                        label={<Text strong style={{ color: 'var(--color-text-secondary)' }}>Full Name</Text>}
                         rules={[{ required: true, message: 'Please enter your name' }]}
                       >
-                        <Input prefix={<UserOutlined className="text-slate-400" />} placeholder="John Doe" className="rounded-xl h-[52px]" />
+                        <Input prefix={<UserOutlined style={{ color: 'var(--color-text-muted)' }} />} placeholder="John Doe" style={{ borderRadius: '12px', height: '52px', backgroundColor: 'var(--color-bg-primary)', borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }} />
                       </Form.Item>
                     </Col>
                     <Col xs={24} sm={12}>
                       <Form.Item
                         name="username"
-                        label={<Text strong className="text-slate-600">Username</Text>}
+                        label={<Text strong style={{ color: 'var(--color-text-secondary)' }}>Username</Text>}
                         rules={[{ required: true, message: 'Please enter a username' }]}
                       >
-                        <Input prefix={<Text strong className="text-slate-400">@</Text>} placeholder="johndoe" className="rounded-xl h-[52px]" />
+                        <Input prefix={<Text strong style={{ color: 'var(--color-text-muted)' }}>@</Text>} placeholder="johndoe" style={{ borderRadius: '12px', height: '52px', backgroundColor: 'var(--color-bg-primary)', borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }} />
                       </Form.Item>
                     </Col>
                     <Col span={24}>
                       <Form.Item
                         name="email"
-                        label={<Text strong className="text-slate-600">Email Address</Text>}
+                        label={<Text strong style={{ color: 'var(--color-text-secondary)' }}>Email Address</Text>}
                         rules={[
                           { required: true, message: 'Email is required' },
                           { type: 'email', message: 'Enter a valid email' }
                         ]}
                       >
-                        <Input prefix={<MailOutlined className="text-slate-400" />} placeholder="name@company.com" className="rounded-xl h-[52px]" />
+                        <Input prefix={<MailOutlined style={{ color: 'var(--color-text-muted)' }} />} placeholder="name@company.com" style={{ borderRadius: '12px', height: '52px', backgroundColor: 'var(--color-bg-primary)', borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }} />
                       </Form.Item>
                     </Col>
                     <Col span={24}>
                       <Form.Item
                         name="mobile"
-                        label={<Text strong className="text-slate-600">Mobile Number</Text>}
+                        label={<Text strong style={{ color: 'var(--color-text-secondary)' }}>Mobile Number</Text>}
                       >
-                        <Input prefix={<PhoneOutlined className="text-slate-400" />} placeholder="+91 00000 00000" className="rounded-xl h-[52px]" />
+                        <Input prefix={<PhoneOutlined style={{ color: 'var(--color-text-muted)' }} />} placeholder="+91 00000 00000" style={{ borderRadius: '12px', height: '52px', backgroundColor: 'var(--color-bg-primary)', borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }} />
                       </Form.Item>
                     </Col>
                   </Row>
@@ -183,22 +205,22 @@ export default function LoginPage() {
               ) : (
                 <Form.Item
                   name="identifier"
-                  label={<Text strong className="text-slate-600">Email or Username</Text>}
+                  label={<Text strong style={{ color: 'var(--color-text-secondary)' }}>Email or Username</Text>}
                   rules={[{ required: true, message: 'Email or Username is required' }]}
                 >
-                  <Input prefix={<UserOutlined className="text-slate-400" />} placeholder="name@email.com or username" className="rounded-xl h-[52px]" />
+                  <Input prefix={<UserOutlined style={{ color: 'var(--color-text-muted)' }} />} placeholder="name@email.com or username" style={{ borderRadius: '12px', height: '52px', backgroundColor: 'var(--color-bg-primary)', borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }} />
                 </Form.Item>
               )}
 
               <Form.Item
                 name="password"
-                label={<Text strong className="text-slate-600">Password</Text>}
+                label={<Text strong style={{ color: 'var(--color-text-secondary)' }}>Password</Text>}
                 rules={[
                   { required: true, message: 'Password is required' },
                   { min: 6, message: 'Minimum 6 characters' }
                 ]}
               >
-                <Input.Password prefix={<LockOutlined className="text-slate-400" />} placeholder="••••••••" className="rounded-xl h-[52px]" />
+                <Input.Password prefix={<LockOutlined style={{ color: 'var(--color-text-muted)' }} />} placeholder="••••••••" style={{ borderRadius: '12px', height: '52px', backgroundColor: 'var(--color-bg-primary)', borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }} />
               </Form.Item>
 
               <Form.Item className="mt-8">
@@ -207,8 +229,15 @@ export default function LoginPage() {
                   htmlType="submit" 
                   loading={loading} 
                   block 
-                  className="h-[56px] rounded-2xl font-bold text-lg shadow-xl shadow-[#6c63ff]/20"
-                  style={{ background: '#6c63ff', borderColor: '#6c63ff' }}
+                  style={{ 
+                    height: '56px', 
+                    borderRadius: '16px', 
+                    fontWeight: 'bold', 
+                    fontSize: '18px', 
+                    background: '#6c63ff', 
+                    borderColor: '#6c63ff',
+                    boxShadow: '0 10px 15px -3px rgba(108, 99, 255, 0.2)'
+                  }}
                   icon={isRegister ? <UserAddOutlined /> : <LoginOutlined />}
                 >
                   {isRegister ? 'Start Journey' : 'Sign In'}
@@ -216,15 +245,18 @@ export default function LoginPage() {
               </Form.Item>
             </Form>
 
-            <Divider className="text-slate-400 text-sm">Or</Divider>
+            <Divider style={{ borderColor: 'var(--color-border)' }}>
+              <Text style={{ color: 'var(--color-text-muted)' }}>Or</Text>
+            </Divider>
 
             <div className="text-center">
-              <Text type="secondary">
+              <Text style={{ color: 'var(--color-text-secondary)' }}>
                 {isRegister ? 'Already have an account?' : "New to ExpenseIQ?"}
               </Text>
               <Button 
                 type="link" 
-                className="font-bold text-[#6c63ff] p-0 ml-2"
+                className="font-bold p-0 ml-2"
+                style={{ color: '#6c63ff' }}
                 onClick={() => {
                   setIsRegister(!isRegister);
                   form.resetFields();
