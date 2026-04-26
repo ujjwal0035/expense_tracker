@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Table, Tag, Button, Popconfirm, Space, Typography, Input, Select } from 'antd';
+import { Table, Tag, Button, Popconfirm, Space, Typography, Input } from 'antd';
 import { Trash2, Edit2, Search, XCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../services/api';
@@ -7,7 +7,6 @@ import { useDashboard } from '../context/DashboardContext';
 import AddExpenseModal from './AddExpenseModal';
 
 const { Text } = Typography;
-const { Option } = Select;
 
 export default function ExpenseTable({ onDelete }) {
   const { refreshTrigger, dateRange, triggerRefresh } = useDashboard();
@@ -30,7 +29,6 @@ export default function ExpenseTable({ onDelete }) {
   }, [searchText]);
 
   useEffect(() => {
-    // Only fetch on other triggers immediately
     fetchExpenses();
   }, [page, refreshTrigger, dateRange]);
 
@@ -86,7 +84,7 @@ export default function ExpenseTable({ onDelete }) {
       dataKey: 'expense_date',
       key: 'date',
       render: (_, record) => (
-        <Text className="text-slate-600">
+        <Text style={{ color: 'var(--color-text-secondary)' }}>
           {new Date(record.expense_date).toLocaleDateString('en-IN', {
             month: 'short',
             day: 'numeric',
@@ -109,7 +107,7 @@ export default function ExpenseTable({ onDelete }) {
       title: 'Description',
       dataIndex: 'description',
       key: 'description',
-      render: (text) => <Text className="text-slate-800">{text || '—'}</Text>,
+      render: (text) => <Text style={{ color: 'var(--color-text-primary)' }}>{text || '—'}</Text>,
     },
     {
       title: 'Amount',
@@ -117,7 +115,7 @@ export default function ExpenseTable({ onDelete }) {
       key: 'amount',
       align: 'right',
       render: (amount) => (
-        <Text className="font-bold text-[#6c63ff]">
+        <Text className="font-bold" style={{ color: '#6c63ff' }}>
           ₹{parseFloat(amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
         </Text>
       ),
@@ -130,7 +128,7 @@ export default function ExpenseTable({ onDelete }) {
         <Space size="middle">
           <Button
             type="text"
-            icon={<Edit2 size={16} className="text-blue-500" />}
+            icon={<Edit2 size={16} style={{ color: '#3b82f6' }} />}
             onClick={() => handleEdit(record)}
             className="flex items-center justify-center"
           />
@@ -156,20 +154,27 @@ export default function ExpenseTable({ onDelete }) {
 
   return (
     <>
-      <div className="glass-card p-0 overflow-hidden border-none shadow-xl">
+      <div className="glass-card p-0 overflow-hidden border-none shadow-xl" style={{ backgroundColor: 'var(--color-bg-card)' }}>
         <div className="p-6 pb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4" style={{ marginBottom: '10px ' }}>
-          <h3 className="text-xl font-bold text-slate-800">Recent Expenses</h3>
+          <h3 className="text-xl font-bold" style={{ color: 'var(--color-text-primary)' }}>Recent Expenses</h3>
 
           <div className="w-full sm:w-auto flex items-center gap-2">
             <Input
               placeholder="Search category or description..."
-              prefix={<Search size={16} className="text-slate-400" />}
-              allowClear={{ clearIcon: <XCircle size={14} className="text-slate-300 hover:text-slate-400" /> }}
+              prefix={<Search size={16} style={{ color: 'var(--color-text-muted)' }} />}
+              allowClear={{ clearIcon: <XCircle size={14} style={{ color: 'var(--color-text-muted)' }} /> }}
               onChange={(e) => {
                 setSearchText(e.target.value);
                 setPage(0);
               }}
-              className="rounded-xl border-slate-200 hover:border-[#6c63ff] focus:border-[#6c63ff] h-[42px] min-w-[280px]"
+              style={{ 
+                borderRadius: '12px', 
+                height: '42px', 
+                minWidth: '280px',
+                backgroundColor: 'var(--color-bg-primary)',
+                borderColor: 'var(--color-border)',
+                color: 'var(--color-text-primary)'
+              }}
             />
           </div>
         </div>

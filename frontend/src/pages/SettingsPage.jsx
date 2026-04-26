@@ -197,8 +197,8 @@ export default function SettingsPage() {
         <Space>
           <Avatar src={`https://api.dicebear.com/7.x/initials/svg?seed=${record.full_name}`} size="small" />
           <div>
-            <div style={{ fontWeight: 'bold' }}>{record.full_name}</div>
-            <div style={{ fontSize: '12px', color: '#94a3b8' }}>{record.email}</div>
+            <div style={{ fontWeight: 'bold', color: 'var(--color-text-primary)' }}>{record.full_name}</div>
+            <div style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>{record.email}</div>
           </div>
         </Space>
       )
@@ -224,7 +224,7 @@ export default function SettingsPage() {
       title: 'Joined',
       dataIndex: 'created_at',
       key: 'created_at',
-      render: (date) => <Text type="secondary">{new Date(date).toLocaleDateString()}</Text>
+      render: (date) => <Text style={{ color: 'var(--color-text-secondary)' }}>{new Date(date).toLocaleDateString()}</Text>
     },
     {
       title: 'Actions',
@@ -243,7 +243,7 @@ export default function SettingsPage() {
       title: 'Category Name',
       dataIndex: 'name',
       key: 'name',
-      render: (text) => <Text strong><TagsOutlined style={{ color: '#6c63ff', marginRight: '8px' }} /> {text}</Text>
+      render: (text) => <Text strong style={{ color: 'var(--color-text-primary)' }}><TagsOutlined style={{ color: '#6c63ff', marginRight: '8px' }} /> {text}</Text>
     },
     {
       title: 'Actions',
@@ -266,21 +266,21 @@ export default function SettingsPage() {
       <Col xs={24} lg={16}>
         <Space direction="vertical" style={{ width: '100%' }} size="large">
           <Card
-            style={{ borderRadius: '24px', boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)', border: '1px solid #f1f5f9', overflow: 'hidden' }}
+            style={{ borderRadius: '24px', boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)', borderColor: 'var(--color-border)', overflow: 'hidden' }}
             loading={loading}
             extra={<Button icon={<EditOutlined />} onClick={() => setEditModalVisible(true)}>Edit Profile</Button>}
-            title={<Space><SettingOutlined /> Profile Settings</Space>}
+            title={<Space style={{ color: 'var(--color-text-primary)' }}><SettingOutlined /> Profile Settings</Space>}
           >
             <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '32px', marginBottom: '32px', padding: '16px' }}>
               <Avatar
                 size={120}
                 icon={<UserOutlined />}
-                style={{ backgroundColor: 'rgba(108, 99, 255, 0.1)', color: '#6c63ff', border: '4px solid #fff', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)' }}
+                style={{ backgroundColor: 'rgba(108, 99, 255, 0.1)', color: '#6c63ff', border: '4px solid var(--color-bg-card)', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)' }}
                 src={`https://api.dicebear.com/7.x/initials/svg?seed=${profile?.full_name || 'User'}`}
               />
               <div style={{ textAlign: 'left' }}>
-                <Title level={3} style={{ margin: 0 }}>{profile?.full_name || 'Loading...'}</Title>
-                <Text type="secondary" style={{ fontSize: '18px' }}>@{profile?.username || 'username'}</Text>
+                <Title level={3} style={{ margin: 0, color: 'var(--color-text-primary)' }}>{profile?.full_name || 'Loading...'}</Title>
+                <Text style={{ fontSize: '18px', color: 'var(--color-text-secondary)' }}>@{profile?.username || 'username'}</Text>
                 <div style={{ marginTop: '16px', display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                   <Tag icon={<CrownOutlined />} color={profile?.role === 'superadmin' ? 'gold' : profile?.role === 'premium' ? 'purple' : 'default'} style={{ borderRadius: '8px', padding: '2px 12px', border: 'none', textTransform: 'uppercase', fontWeight: 'bold' }}>
                     {profile?.role || 'Free'}
@@ -290,35 +290,35 @@ export default function SettingsPage() {
               </div>
             </div>
 
-            <Divider />
+            <Divider style={{ borderColor: 'var(--color-border)' }} />
 
             <Descriptions
               column={{ xs: 1, sm: 2 }}
               layout="vertical"
               style={{ padding: '16px' }}
             >
-              <Descriptions.Item label={<Space><MailOutlined /> <Text strong>Email Address</Text></Space>}>
-                {profile?.email}
+              <Descriptions.Item label={<Space style={{ color: 'var(--color-text-secondary)' }}><MailOutlined /> <Text strong style={{ color: 'inherit' }}>Email Address</Text></Space>}>
+                <Text style={{ color: 'var(--color-text-primary)' }}>{profile?.email}</Text>
               </Descriptions.Item>
-              <Descriptions.Item label={<Space><PhoneOutlined /> <Text strong>Mobile Number</Text></Space>}>
-                {profile?.mobile || 'Not provided'}
+              <Descriptions.Item label={<Space style={{ color: 'var(--color-text-secondary)' }}><PhoneOutlined /> <Text strong style={{ color: 'inherit' }}>Mobile Number</Text></Space>}>
+                <Text style={{ color: 'var(--color-text-primary)' }}>{profile?.mobile || 'Not provided'}</Text>
               </Descriptions.Item>
-              <Descriptions.Item label={<Space><GlobalOutlined /> <Text strong>Account Type</Text></Space>}>
-                <span style={{ textTransform: 'capitalize' }}>{profile?.role} User</span>
+              <Descriptions.Item label={<Space style={{ color: 'var(--color-text-secondary)' }}><GlobalOutlined /> <Text strong style={{ color: 'inherit' }}>Account Type</Text></Space>}>
+                <span style={{ textTransform: 'capitalize', color: 'var(--color-text-primary)' }}>{profile?.role} User</span>
               </Descriptions.Item>
-              <Descriptions.Item label={<Space><CalendarOutlined /> <Text strong>Member Since</Text></Space>}>
-                {profile ? new Date(profile.created_at).toLocaleDateString('en-IN', { year: 'numeric', month: 'long' }) : '--'}
+              <Descriptions.Item label={<Space style={{ color: 'var(--color-text-secondary)' }}><CalendarOutlined /> <Text strong style={{ color: 'inherit' }}>Member Since</Text></Space>}>
+                <Text style={{ color: 'var(--color-text-primary)' }}>{profile ? new Date(profile.created_at).toLocaleDateString('en-IN', { year: 'numeric', month: 'long' }) : '--'}</Text>
               </Descriptions.Item>
             </Descriptions>
           </Card>
 
-          <Card style={{ borderRadius: '24px', boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)', border: '1px solid #f1f5f9', padding: '16px' }}>
-            <Title level={5} style={{ marginBottom: '24px' }}>Data Management</Title>
+          <Card style={{ borderRadius: '24px', boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)', borderColor: 'var(--color-border)', padding: '16px' }}>
+            <Title level={5} style={{ marginBottom: '24px', color: 'var(--color-text-primary)' }}>Data Management</Title>
             <Row gutter={[24, 24]}>
               <Col xs={24} md={12}>
-                <div style={{ padding: '24px', borderRadius: '16px', backgroundColor: '#f8fafc', border: '1px solid #f1f5f9' }}>
-                  <Title level={5}>Export Your Data</Title>
-                  <Paragraph type="secondary" style={{ fontSize: '12px', marginBottom: '16px' }}>
+                <div style={{ padding: '24px', borderRadius: '16px', backgroundColor: 'var(--color-bg-primary)', border: '1px solid var(--color-border)' }}>
+                  <Title level={5} style={{ color: 'var(--color-text-primary)' }}>Export Your Data</Title>
+                  <Paragraph style={{ fontSize: '12px', marginBottom: '16px', color: 'var(--color-text-secondary)' }}>
                     Download a complete backup of all your expenses in CSV format.
                   </Paragraph>
                   <Button
@@ -331,9 +331,9 @@ export default function SettingsPage() {
                 </div>
               </Col>
               <Col xs={24} md={12}>
-                <div style={{ padding: '24px', borderRadius: '16px', backgroundColor: '#fef2f2', border: '1px solid #fee2e2' }}>
+                <div style={{ padding: '24px', borderRadius: '16px', backgroundColor: 'rgba(239, 68, 68, 0.05)', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
                   <Title level={5} style={{ color: '#dc2626' }}>Danger Zone</Title>
-                  <Paragraph type="secondary" style={{ fontSize: '12px', marginBottom: '16px' }}>
+                  <Paragraph style={{ fontSize: '12px', marginBottom: '16px', color: 'var(--color-text-secondary)' }}>
                     Irreversibly delete all your expense data.
                   </Paragraph>
                   <Button danger icon={<DeleteOutlined />} style={{ borderRadius: '12px', height: '40px', fontWeight: 'bold' }}>
@@ -348,28 +348,28 @@ export default function SettingsPage() {
 
       <Col xs={24} lg={8}>
         <Space direction="vertical" style={{ width: '100%' }} size="large">
-          <Card style={{ borderRadius: '24px', boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)', border: '1px solid #f1f5f9', textAlign: 'center', padding: '32px 16px' }}>
+          <Card style={{ borderRadius: '24px', boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)', borderColor: 'var(--color-border)', textAlign: 'center', padding: '32px 16px' }}>
             <Statistic
-              title={<Text strong style={{ color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.1em', fontSize: '12px' }}>Total Tracked Spending</Text>}
+              title={<Text strong style={{ color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em', fontSize: '12px' }}>Total Tracked Spending</Text>}
               value={stats?.total_spend || 0}
               precision={2}
               prefix="₹"
               valueStyle={{ color: '#6c63ff', fontWeight: 800, fontSize: '32px' }}
             />
-            <Divider style={{ margin: '24px 0' }} />
+            <Divider style={{ margin: '24px 0', borderColor: 'var(--color-border)' }} />
             <Row gutter={16}>
               <Col span={12}>
                 <Statistic
-                  title={<Text style={{ fontSize: '12px', color: '#94a3b8' }}>Expenses</Text>}
+                  title={<Text style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>Expenses</Text>}
                   value={stats?.expense_count || 0}
-                  valueStyle={{ fontSize: '20px', fontWeight: 700 }}
+                  valueStyle={{ fontSize: '20px', fontWeight: 700, color: 'var(--color-text-primary)' }}
                 />
               </Col>
               <Col span={12}>
                 <Statistic
-                  title={<Text style={{ fontSize: '12px', color: '#94a3b8' }}>Categories</Text>}
+                  title={<Text style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>Categories</Text>}
                   value={categories.length}
-                  valueStyle={{ fontSize: '20px', fontWeight: 700 }}
+                  valueStyle={{ fontSize: '20px', fontWeight: 700, color: 'var(--color-text-primary)' }}
                 />
               </Col>
             </Row>
@@ -393,9 +393,9 @@ export default function SettingsPage() {
   );
 
   const adminContent = (
-    <Card style={{ borderRadius: '24px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)', border: '1px solid #f1f5f9', overflow: 'hidden', padding: 0 }} styles={{ body: { padding: 0 } }}>
+    <Card style={{ borderRadius: '24px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)', borderColor: 'var(--color-border)', overflow: 'hidden', padding: 0 }} styles={{ body: { padding: 0 } }}>
       <Row>
-        <Col xs={24} md={6} style={{ backgroundColor: '#f8fafc', borderRight: '1px solid #f1f5f9', padding: '32px 8px' }}>
+        <Col xs={24} md={6} style={{ backgroundColor: 'var(--color-bg-primary)', borderRight: '1px solid var(--color-border)', padding: '32px 8px' }}>
           <Menu
             mode="inline"
             selectedKeys={[adminTab]}
@@ -424,13 +424,13 @@ export default function SettingsPage() {
             ]}
           />
         </Col>
-        <Col xs={24} md={18} style={{ padding: '40px 64px', backgroundColor: '#fff' }}>
+        <Col xs={24} md={18} style={{ padding: '40px 64px', backgroundColor: 'var(--color-bg-card)' }}>
           {adminTab === 'users' ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '40px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
-                  <Title level={4} style={{ margin: 0 }}>User Management</Title>
-                  <Text type="secondary">Manage user roles and platform access</Text>
+                  <Title level={4} style={{ margin: 0, color: 'var(--color-text-primary)' }}>User Management</Title>
+                  <Text style={{ color: 'var(--color-text-secondary)' }}>Manage user roles and platform access</Text>
                 </div>
                 <Button icon={<UsergroupAddOutlined />} style={{ borderRadius: '12px', height: '42px', padding: '0 24px' }}>Invite User</Button>
               </div>
@@ -447,21 +447,21 @@ export default function SettingsPage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '40px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
-                  <Title level={4} style={{ margin: 0 }}>Category Management</Title>
-                  <Text type="secondary">Define and organize global expense categories</Text>
+                  <Title level={4} style={{ margin: 0, color: 'var(--color-text-primary)' }}>Category Management</Title>
+                  <Text style={{ color: 'var(--color-text-secondary)' }}>Define and organize global expense categories</Text>
                 </div>
               </div>
               
-              <div style={{ backgroundColor: '#fff', padding: '32px', borderRadius: '24px', border: '1px solid #f1f5f9', boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)', display: 'flex', gap: '24px', alignItems: 'flex-end' }}>
+              <div style={{ backgroundColor: 'var(--color-bg-card)', padding: '32px', borderRadius: '24px', border: '1px solid var(--color-border)', boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)', display: 'flex', gap: '24px', alignItems: 'flex-end' }}>
                 <div style={{ flex: 1 }}>
-                  <Text strong style={{ color: '#64748b', display: 'block', marginBottom: '8px' }}>Add New Category</Text>
+                  <Text strong style={{ color: 'var(--color-text-secondary)', display: 'block', marginBottom: '8px' }}>Add New Category</Text>
                   <Input 
                     placeholder="e.g. Business Travel, Investments..." 
                     value={newCatName} 
                     onChange={(e) => setNewCatName(e.target.value)}
                     onPressEnter={handleAddCategory}
-                    style={{ borderRadius: '12px', height: '46px', border: '1px solid #e2e8f0' }}
-                    prefix={<AppstoreOutlined style={{ color: '#94a3b8' }} />}
+                    style={{ borderRadius: '12px', height: '46px', border: '1px solid var(--color-border)', backgroundColor: 'var(--color-bg-primary)', color: 'var(--color-text-primary)' }}
+                    prefix={<AppstoreOutlined style={{ color: 'var(--color-text-muted)' }} />}
                   />
                 </div>
                 <Button 
@@ -474,8 +474,9 @@ export default function SettingsPage() {
                     height: '46px', 
                     padding: '0 32px', 
                     fontWeight: 'bold', 
-                    background: newCatName.trim() ? '#6c63ff' : '#f1f5f9', 
-                    borderColor: newCatName.trim() ? '#6c63ff' : '#e2e8f0' 
+                    background: newCatName.trim() ? '#6c63ff' : 'var(--color-bg-primary)', 
+                    borderColor: newCatName.trim() ? '#6c63ff' : 'var(--color-border)',
+                    color: newCatName.trim() ? '#fff' : 'var(--color-text-muted)'
                   }}
                 >
                   Add Category
@@ -484,12 +485,12 @@ export default function SettingsPage() {
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Title level={5} style={{ margin: 0 }}>Category List</Title>
+                  <Title level={5} style={{ margin: 0, color: 'var(--color-text-primary)' }}>Category List</Title>
                   <Input 
                     placeholder="Search categories..." 
-                    prefix={<SearchOutlined style={{ color: '#94a3b8' }} />}
+                    prefix={<SearchOutlined style={{ color: 'var(--color-text-muted)' }} />}
                     onChange={(e) => setCatSearch(e.target.value)}
-                    style={{ width: '280px', borderRadius: '12px', height: '40px' }}
+                    style={{ width: '280px', borderRadius: '12px', height: '40px', backgroundColor: 'var(--color-bg-primary)', borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
                   />
                 </div>
                 <Table
@@ -510,8 +511,8 @@ export default function SettingsPage() {
   return (
     <div style={{ padding: '40px 16px', maxWidth: '1152px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '32px' }}>
       <div>
-        <Title level={2}>Account Settings</Title>
-        <Text type="secondary">Manage your profile, security and preferences</Text>
+        <Title level={2} style={{ color: 'var(--color-text-primary)' }}>Account Settings</Title>
+        <Text style={{ color: 'var(--color-text-secondary)' }}>Manage your profile, security and preferences</Text>
       </div>
 
       <Tabs
@@ -520,22 +521,22 @@ export default function SettingsPage() {
         items={[
           {
             key: 'profile',
-            label: <Space><UserOutlined /> Profile</Space>,
+            label: <Space style={{ color: 'inherit' }}><UserOutlined /> Profile</Space>,
             children: profileContent
           },
           {
             key: 'security',
-            label: <Space><LockOutlined /> Security</Space>,
-            children: <Card style={{ borderRadius: '24px', border: '1px solid #f1f5f9', padding: '32px', textAlign: 'center' }}>
+            label: <Space style={{ color: 'inherit' }}><LockOutlined /> Security</Space>,
+            children: <Card style={{ borderRadius: '24px', border: '1px solid var(--color-border)', padding: '32px', textAlign: 'center' }}>
               <LockOutlined style={{ fontSize: 48, color: '#6c63ff' }} />
-              <Title level={4} style={{ marginTop: '16px' }}>Security Settings</Title>
-              <Paragraph>Change your password and manage active sessions.</Paragraph>
+              <Title level={4} style={{ marginTop: '16px', color: 'var(--color-text-primary)' }}>Security Settings</Title>
+              <Paragraph style={{ color: 'var(--color-text-secondary)' }}>Change your password and manage active sessions.</Paragraph>
               <Button type="primary" onClick={() => setEditModalVisible(true)}>Change Password</Button>
             </Card>
           },
           ...(profile?.role === 'superadmin' ? [{
             key: 'admin',
-            label: <Space><SafetyCertificateOutlined /> Admin Panel</Space>,
+            label: <Space style={{ color: 'inherit' }}><SafetyCertificateOutlined /> Admin Panel</Space>,
             children: adminContent
           }] : [])
         ]}
@@ -560,12 +561,12 @@ export default function SettingsPage() {
             <Input prefix={<UserOutlined />} />
           </Form.Item>
           <Form.Item name="username" label="Username" rules={[{ required: true }]}>
-            <Input prefix={<Text strong style={{ color: '#94a3b8' }}>@</Text>} />
+            <Input prefix={<Text strong style={{ color: 'var(--color-text-muted)' }}>@</Text>} />
           </Form.Item>
           <Form.Item name="mobile" label="Mobile Number">
             <Input prefix={<PhoneOutlined />} />
           </Form.Item>
-          <Divider />
+          <Divider style={{ borderColor: 'var(--color-border)' }} />
           <Form.Item name="password" label="New Password (Leave blank to keep current)">
             <Input.Password prefix={<LockOutlined />} />
           </Form.Item>
@@ -577,7 +578,7 @@ export default function SettingsPage() {
 
       {/* Edit Category Modal */}
       <Modal
-        title={<Space><TagsOutlined /> Edit Category</Space>}
+        title={<Space style={{ color: 'var(--color-text-primary)' }}><TagsOutlined /> Edit Category</Space>}
         open={catModalVisible}
         onCancel={() => setCatModalVisible(false)}
         footer={null}
@@ -595,7 +596,7 @@ export default function SettingsPage() {
             label="Category Name" 
             rules={[{ required: true, message: 'Please enter a name' }]}
           >
-            <Input prefix={<TagsOutlined style={{ color: '#94a3b8' }} />} placeholder="Enter name" style={{ borderRadius: '12px' }} />
+            <Input prefix={<TagsOutlined style={{ color: 'var(--color-text-muted)' }} />} placeholder="Enter name" style={{ borderRadius: '12px' }} />
           </Form.Item>
           <Form.Item style={{ marginBottom: 0, marginTop: '32px' }}>
             <Button type="primary" htmlType="submit" block icon={<SaveOutlined />} style={{ borderRadius: '12px', height: '44px' }}>Update Category</Button>

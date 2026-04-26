@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { DatePicker, Space, Button, Card, Tabs, Table, Tag, Progress, Typography, Row, Col, Select } from 'antd';
+import { DatePicker, Space, Button, Card, Tabs, Table, Progress, Typography, Row, Col, Select } from 'antd';
 import dayjs from 'dayjs';
 import { useDashboard } from '../context/DashboardContext';
 import CategoryPieChart from '../components/CategoryPieChart';
@@ -7,6 +7,7 @@ import MonthlyTrendLine from '../components/MonthlyTrendLine';
 import api from '../services/api';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Cell, Legend } from 'recharts';
 import { CalendarOutlined, BarChartOutlined, LineChartOutlined, PieChartOutlined } from '@ant-design/icons';
+import { useTheme } from '../context/ThemeContext';
 
 const { RangePicker } = DatePicker;
 const { Title, Text } = Typography;
@@ -19,6 +20,7 @@ const COLORS = [
 
 export default function AnalysisPage() {
   const { dateRange, setDateRange, refreshTrigger } = useDashboard();
+  const { isDarkMode } = useTheme();
   const [summary, setSummary] = useState(null);
   const [categoryData, setCategoryData] = useState([]);
   const [stackedData, setStackedData] = useState({ data: [], categories: [] });
@@ -71,7 +73,7 @@ export default function AnalysisPage() {
       render: (text, _, index) => (
         <Space>
           <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
-          <Text strong>{text}</Text>
+          <Text strong style={{ color: 'var(--color-text-primary)' }}>{text}</Text>
         </Space>
       ),
     },
@@ -81,7 +83,7 @@ export default function AnalysisPage() {
       key: 'total',
       align: 'right',
       render: (amount) => (
-        <Text strong className="text-[#6c63ff]">
+        <Text strong style={{ color: '#6c63ff' }}>
           ₹{parseFloat(amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
         </Text>
       ),
@@ -93,8 +95,8 @@ export default function AnalysisPage() {
       width: '30%',
       render: (pct) => (
         <Space direction="vertical" className="w-full" size={0}>
-          <Text size="small">{pct}%</Text>
-          <Progress percent={pct} showInfo={false} strokeColor="#6c63ff" trailColor="#f1f5f9" />
+          <Text size="small" style={{ color: 'var(--color-text-secondary)' }}>{pct}%</Text>
+          <Progress percent={pct} showInfo={false} strokeColor="#6c63ff" trailColor={isDarkMode ? '#334155' : '#f1f5f9'} />
         </Space>
       ),
     },
@@ -103,30 +105,38 @@ export default function AnalysisPage() {
   const tabItems = [
     {
       key: 'visual',
-      label: <Space><BarChartOutlined /> Visual Analytics</Space>,
+      label: <Space style={{ color: 'inherit' }}><BarChartOutlined /> Visual Analytics</Space>,
       children: (
         <div className="space-y-10">
           <Row gutter={[32, 32]}>
             <Col xs={24} lg={12}>
               <Card 
-                title={<Space><BarChartOutlined className="text-[#f59e0b]" /> <Title level={5} style={{ margin: 0 }}>Top Categories Comparison</Title></Space>}
-                className="rounded-3xl shadow-sm border-slate-100 h-full"
+                title={<Space><BarChartOutlined style={{ color: '#f59e0b' }} /> <Title level={5} style={{ margin: 0, color: 'var(--color-text-primary)' }}>Top Categories Comparison</Title></Space>}
+                style={{ borderRadius: '24px', borderColor: 'var(--color-border)' }}
+                className="shadow-sm h-full"
               >
                 <div className="h-[350px] w-full">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={categoryData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDarkMode ? '#334155' : '#f1f5f9'} />
                       <XAxis 
                         dataKey="category" 
                         angle={-45} 
                         textAnchor="end" 
                         interval={0} 
                         height={60}
-                        tick={{ fontSize: 10, fill: '#64748b' }}
+                        tick={{ fontSize: 10, fill: isDarkMode ? '#94a3b8' : '#64748b' }}
                       />
-                      <YAxis tick={{ fontSize: 10, fill: '#64748b' }} tickFormatter={(v) => `₹${v}`} />
+                      <YAxis tick={{ fontSize: 10, fill: isDarkMode ? '#94a3b8' : '#64748b' }} tickFormatter={(v) => `₹${v}`} />
                       <RechartsTooltip 
-                        contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
+                        contentStyle={{ 
+                          backgroundColor: 'var(--color-bg-card)', 
+                          borderRadius: '12px', 
+                          border: '1px solid var(--color-border)', 
+                          boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)',
+                          color: 'var(--color-text-primary)'
+                        }}
+                        itemStyle={{ color: 'var(--color-text-primary)' }}
                         formatter={(value) => [`₹${value.toLocaleString('en-IN')}`, 'Spend']}
                       />
                       <Bar dataKey="total" radius={[8, 8, 0, 0]} barSize={32}>
@@ -141,8 +151,9 @@ export default function AnalysisPage() {
             </Col>
             <Col xs={24} lg={12}>
               <Card 
-                title={<Space><PieChartOutlined className="text-[#10b981]" /> <Title level={5} style={{ margin: 0 }}>Category Distribution</Title></Space>}
-                className="rounded-3xl shadow-sm border-slate-100 h-full"
+                title={<Space><PieChartOutlined style={{ color: '#10b981' }} /> <Title level={5} style={{ margin: 0, color: 'var(--color-text-primary)' }}>Category Distribution</Title></Space>}
+                style={{ borderRadius: '24px', borderColor: 'var(--color-border)' }}
+                className="shadow-sm h-full"
               >
                 <div className="h-[350px]">
                   <CategoryPieChart data={categoryData} loading={loading} />
@@ -154,8 +165,9 @@ export default function AnalysisPage() {
           <Row gutter={[32, 32]}>
             <Col xs={24} lg={12}>
               <Card 
-                title={<Space><LineChartOutlined className="text-[#6c63ff]" /> <Title level={5} style={{ margin: 0 }}>Spending Trend ({groupBy.charAt(0).toUpperCase() + groupBy.slice(1)} Wise)</Title></Space>}
-                className="rounded-3xl shadow-sm border-slate-100 h-full"
+                title={<Space><LineChartOutlined style={{ color: '#6c63ff' }} /> <Title level={5} style={{ margin: 0, color: 'var(--color-text-primary)' }}>Spending Trend ({groupBy.charAt(0).toUpperCase() + groupBy.slice(1)} Wise)</Title></Space>}
+                style={{ borderRadius: '24px', borderColor: 'var(--color-border)' }}
+                className="shadow-sm h-full"
               >
                 <div className="h-[400px]">
                   <MonthlyTrendLine data={summary?.monthly_breakdown || []} loading={loading} />
@@ -164,23 +176,31 @@ export default function AnalysisPage() {
             </Col>
             <Col xs={24} lg={12}>
               <Card 
-                title={<Space><BarChartOutlined className="text-[#ef4444]" /> <Title level={5} style={{ margin: 0 }}>Categories Over Time ({groupBy})</Title></Space>}
-                className="rounded-3xl shadow-sm border-slate-100"
+                title={<Space><BarChartOutlined style={{ color: '#ef4444' }} /> <Title level={5} style={{ margin: 0, color: 'var(--color-text-primary)' }}>Categories Over Time ({groupBy})</Title></Space>}
+                style={{ borderRadius: '24px', borderColor: 'var(--color-border)' }}
+                className="shadow-sm h-full"
               >
                 <div className="h-[400px] w-full">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={stackedData.data} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDarkMode ? '#334155' : '#f1f5f9'} />
                       <XAxis 
                         dataKey="period" 
-                        tick={{ fontSize: 12, fill: '#64748b' }}
+                        tick={{ fontSize: 12, fill: isDarkMode ? '#94a3b8' : '#64748b' }}
                       />
-                      <YAxis tick={{ fontSize: 12, fill: '#64748b' }} tickFormatter={(v) => `₹${v}`} />
+                      <YAxis tick={{ fontSize: 12, fill: isDarkMode ? '#94a3b8' : '#64748b' }} tickFormatter={(v) => `₹${v}`} />
                       <RechartsTooltip 
-                        contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
+                        contentStyle={{ 
+                          backgroundColor: 'var(--color-bg-card)', 
+                          borderRadius: '12px', 
+                          border: '1px solid var(--color-border)', 
+                          boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)',
+                          color: 'var(--color-text-primary)'
+                        }}
+                        itemStyle={{ color: 'var(--color-text-primary)' }}
                         formatter={(value, name) => [`₹${value.toLocaleString('en-IN')}`, name]}
                       />
-                      <Legend />
+                      <Legend wrapperStyle={{ paddingTop: '20px' }} />
                       {stackedData.categories.map((cat, index) => (
                         <Bar 
                           key={cat} 
@@ -201,9 +221,9 @@ export default function AnalysisPage() {
     },
     {
       key: 'table',
-      label: <Space><CalendarOutlined /> Tabular Breakdown</Space>,
+      label: <Space style={{ color: 'inherit' }}><CalendarOutlined /> Tabular Breakdown</Space>,
       children: (
-        <Card className="rounded-3xl shadow-sm border-slate-100 overflow-hidden">
+        <Card style={{ borderRadius: '24px', borderColor: 'var(--color-border)', overflow: 'hidden' }}>
           <Table 
             columns={tableColumns} 
             dataSource={categoryData} 
@@ -221,8 +241,8 @@ export default function AnalysisPage() {
       {/* Page Header */}
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6" style={{ marginTop: '20px' }}>
         <div>
-          <h1 className="text-3xl font-bold text-slate-800">Analytics</h1>
-          <p className="text-slate-500">Comprehensive view of your financial ecosystem</p>
+          <h1 className="text-3xl font-bold" style={{ color: 'var(--color-text-primary)' }}>Analytics</h1>
+          <p style={{ color: 'var(--color-text-secondary)' }}>Comprehensive view of your financial ecosystem</p>
         </div>
 
         <div className="flex flex-wrap items-center gap-4">
@@ -231,7 +251,7 @@ export default function AnalysisPage() {
               value={groupBy}
               onChange={setGroupBy}
               className="h-[46px] w-[140px]"
-              dropdownStyle={{ borderRadius: '12px' }}
+              dropdownStyle={{ borderRadius: '12px', backgroundColor: 'var(--color-bg-card)' }}
             >
               <Option value="day">Day Wise</Option>
               <Option value="week">Week Wise</Option>
@@ -240,7 +260,8 @@ export default function AnalysisPage() {
               <Option value="year">Year Wise</Option>
             </Select>
             <RangePicker
-              className="h-[46px] rounded-xl border-slate-200 shadow-sm"
+              className="h-[46px] rounded-xl shadow-sm"
+              style={{ backgroundColor: 'var(--color-bg-primary)', borderColor: 'var(--color-border)' }}
               value={dateRange.startDate ? [dayjs(dateRange.startDate), dayjs(dateRange.endDate)] : null}
               onChange={handleDateChange}
               format="DD MMM, YYYY"
@@ -250,7 +271,7 @@ export default function AnalysisPage() {
               className="h-[46px] rounded-xl font-semibold px-6"
               onClick={() => setDateRange({ startDate: '', endDate: '' })}
               type={!dateRange.startDate ? "primary" : "default"}
-              style={!dateRange.startDate ? { background: '#6c63ff', borderColor: '#6c63ff' } : {}}
+              style={!dateRange.startDate ? { background: '#6c63ff', borderColor: '#6c63ff' } : { borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
               size="large"
             >
               All Time

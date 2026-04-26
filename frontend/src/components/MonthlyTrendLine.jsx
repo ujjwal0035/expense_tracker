@@ -1,6 +1,4 @@
 import {
-  LineChart,
-  Line,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -9,11 +7,12 @@ import {
   Area,
   AreaChart,
 } from 'recharts';
+import { useTheme } from '../context/ThemeContext';
 
 const CustomTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
     return (
-      <div className="glass-card px-4 py-3">
+      <div className="glass-card px-4 py-3" style={{ backgroundColor: 'var(--color-bg-card)', borderColor: 'var(--color-border)' }}>
         <p className="text-sm font-semibold mb-1" style={{ color: 'var(--color-text-primary)' }}>
           {label}
         </p>
@@ -27,6 +26,8 @@ const CustomTooltip = ({ active, payload, label }) => {
 };
 
 export default function MonthlyTrendLine({ data, loading }) {
+  const { isDarkMode } = useTheme();
+
   if (loading) {
     return (
       <div className="flex items-center justify-center" style={{ height: '300px' }}>
@@ -58,7 +59,7 @@ export default function MonthlyTrendLine({ data, loading }) {
         </defs>
         <CartesianGrid
           strokeDasharray="3 3"
-          stroke="#e2e8f0"
+          stroke={isDarkMode ? '#334155' : '#e2e8f0'}
           vertical={false}
         />
         <XAxis
@@ -85,13 +86,13 @@ export default function MonthlyTrendLine({ data, loading }) {
           dot={{
             r: 4,
             fill: '#6c63ff',
-            stroke: '#ffffff',
+            stroke: isDarkMode ? '#1e293b' : '#ffffff',
             strokeWidth: 2,
           }}
           activeDot={{
             r: 6,
             fill: '#8b83ff',
-            stroke: '#ffffff',
+            stroke: isDarkMode ? '#1e293b' : '#ffffff',
             strokeWidth: 2,
           }}
         />
