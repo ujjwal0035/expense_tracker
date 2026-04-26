@@ -27,6 +27,9 @@ export default function LoginPage() {
   const handleSubmit = async (values) => {
     setLoading(true);
     try {
+      // Determine which identifier to use for login
+      const loginIdentifier = isRegister ? values.email : values.identifier;
+
       if (isRegister) {
         await api.post('/auth/register', {
           email: values.email,
@@ -40,12 +43,12 @@ export default function LoginPage() {
 
       // Updated to send 'username_or_email' which supports both
       const { data } = await api.post('/auth/login', { 
-        username_or_email: values.identifier, 
+        username_or_email: loginIdentifier, 
         password: values.password 
       });
       
       localStorage.setItem('token', data.access_token);
-      localStorage.setItem('user', data.username || values.identifier);
+      localStorage.setItem('user', loginIdentifier);
       toast.success('Welcome back!');
       navigate('/dashboard');
     } catch (err) {
