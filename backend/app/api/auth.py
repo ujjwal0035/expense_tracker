@@ -44,13 +44,18 @@ async def register(user_data: UserCreate, db: AsyncSession = Depends(get_db)):
 @router.post("/login", response_model=Token)
 async def login(login_data: LoginRequest, db: AsyncSession = Depends(get_db)):
     """Authenticate user and return JWT token."""
-    result = await db.execute(select(User).where(User.email == login_data.email))
+    # Search by email OR username
+    query = select(User).where(
+        (User.email == login_data.username_or_email) | 
+        (User.username == login_data.username_or_email)
+    )
+    result = await db.execute(query)
     user = result.scalar_one_or_none()
 
     if not user or not verify_password(login_data.password, user.password_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password",
+            detail="Incorrect username/email or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
 

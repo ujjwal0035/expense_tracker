@@ -37,5 +37,5 @@ class Token(BaseModel):
 
 
 class LoginRequest(BaseModel):
-    email: EmailStr
+    username_or_email: str
     password: str

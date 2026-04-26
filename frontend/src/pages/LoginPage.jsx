@@ -38,13 +38,14 @@ export default function LoginPage() {
         toast.success('Account created! Logging you in...');
       }
 
+      // Updated to send 'username_or_email' which supports both
       const { data } = await api.post('/auth/login', { 
-        email: values.email, 
+        username_or_email: values.identifier, 
         password: values.password 
       });
       
       localStorage.setItem('token', data.access_token);
-      localStorage.setItem('user', values.email);
+      localStorage.setItem('user', data.username || values.identifier);
       toast.success('Welcome back!');
       navigate('/dashboard');
     } catch (err) {
@@ -133,47 +134,58 @@ export default function LoginPage() {
               requiredMark={false}
               size="large"
             >
-              {isRegister && (
-                <Row gutter={16}>
-                  <Col xs={24} sm={12}>
-                    <Form.Item
-                      name="fullName"
-                      label={<Text strong className="text-slate-600">Full Name</Text>}
-                      rules={[{ required: true, message: 'Please enter your name' }]}
-                    >
-                      <Input prefix={<UserOutlined className="text-slate-400" />} placeholder="John Doe" className="rounded-xl h-[52px]" />
-                    </Form.Item>
-                  </Col>
-                  <Col xs={24} sm={12}>
-                    <Form.Item
-                      name="username"
-                      label={<Text strong className="text-slate-600">Username</Text>}
-                      rules={[{ required: true, message: 'Please enter a username' }]}
-                    >
-                      <Input prefix={<Text strong className="text-slate-400">@</Text>} placeholder="johndoe" className="rounded-xl h-[52px]" />
-                    </Form.Item>
-                  </Col>
-                  <Col span={24}>
-                    <Form.Item
-                      name="mobile"
-                      label={<Text strong className="text-slate-600">Mobile Number</Text>}
-                    >
-                      <Input prefix={<PhoneOutlined className="text-slate-400" />} placeholder="+91 00000 00000" className="rounded-xl h-[52px]" />
-                    </Form.Item>
-                  </Col>
-                </Row>
+              {isRegister ? (
+                <>
+                  <Row gutter={16}>
+                    <Col xs={24} sm={12}>
+                      <Form.Item
+                        name="fullName"
+                        label={<Text strong className="text-slate-600">Full Name</Text>}
+                        rules={[{ required: true, message: 'Please enter your name' }]}
+                      >
+                        <Input prefix={<UserOutlined className="text-slate-400" />} placeholder="John Doe" className="rounded-xl h-[52px]" />
+                      </Form.Item>
+                    </Col>
+                    <Col xs={24} sm={12}>
+                      <Form.Item
+                        name="username"
+                        label={<Text strong className="text-slate-600">Username</Text>}
+                        rules={[{ required: true, message: 'Please enter a username' }]}
+                      >
+                        <Input prefix={<Text strong className="text-slate-400">@</Text>} placeholder="johndoe" className="rounded-xl h-[52px]" />
+                      </Form.Item>
+                    </Col>
+                    <Col span={24}>
+                      <Form.Item
+                        name="email"
+                        label={<Text strong className="text-slate-600">Email Address</Text>}
+                        rules={[
+                          { required: true, message: 'Email is required' },
+                          { type: 'email', message: 'Enter a valid email' }
+                        ]}
+                      >
+                        <Input prefix={<MailOutlined className="text-slate-400" />} placeholder="name@company.com" className="rounded-xl h-[52px]" />
+                      </Form.Item>
+                    </Col>
+                    <Col span={24}>
+                      <Form.Item
+                        name="mobile"
+                        label={<Text strong className="text-slate-600">Mobile Number</Text>}
+                      >
+                        <Input prefix={<PhoneOutlined className="text-slate-400" />} placeholder="+91 00000 00000" className="rounded-xl h-[52px]" />
+                      </Form.Item>
+                    </Col>
+                  </Row>
+                </>
+              ) : (
+                <Form.Item
+                  name="identifier"
+                  label={<Text strong className="text-slate-600">Email or Username</Text>}
+                  rules={[{ required: true, message: 'Email or Username is required' }]}
+                >
+                  <Input prefix={<UserOutlined className="text-slate-400" />} placeholder="name@email.com or username" className="rounded-xl h-[52px]" />
+                </Form.Item>
               )}
-
-              <Form.Item
-                name="email"
-                label={<Text strong className="text-slate-600">Email Address</Text>}
-                rules={[
-                  { required: true, message: 'Email is required' },
-                  { type: 'email', message: 'Enter a valid email' }
-                ]}
-              >
-                <Input prefix={<MailOutlined className="text-slate-400" />} placeholder="name@company.com" className="rounded-xl h-[52px]" />
-              </Form.Item>
 
               <Form.Item
                 name="password"
