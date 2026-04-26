@@ -9,9 +9,11 @@ from app.core.database import get_db
 from app.core.security import get_current_user
 from app.models.user import User
 from app.models.expense import Expense
+from app.models.budget import Budget
 from app.schemas.expense import AnalyticsSummary, CategoryBreakdown, DailySummary, MonthlySummary
 
 router = APIRouter(prefix="/api/v1/analytics", tags=["Analytics"])
+OVERALL_BUDGET_CATEGORY = "__overall__"
 
 
 @router.get("/summary", response_model=AnalyticsSummary)
@@ -99,13 +101,42 @@ async def get_summary(
             DailySummary(date=row.date, total=float(row.total)) for row in daily_rows
         ]
 
+        # Budget Calculation
+        # For simplicity, we calculate budget for the current month if no range is specified
+        # If range is specified, we look for budgets in those months
+        budget_filter = [Budget.user_id == current_user.id]
+        if start_date and end_date:
+            # Get months in range
+            start_month = start_date.strftime("%Y-%m")
+            end_month = end_date.strftime("%Y-%m")
+            budget_filter.append(Budget.month >= start_month)
+            budget_filter.append(Budget.month <= end_month)
+        else:
+            budget_filter.append(Budget.month == date.today().strftime("%Y-%m"))
+
+        overall_budget_query = (
+            select(func.coalesce(func.sum(Budget.amount), 0))
+            .where(*budget_filter, Budget.category == OVERALL_BUDGET_CATEGORY)
+        )
+        overall_budget = float((await db.execute(overall_budget_query)).scalar_one())
+
+        if overall_budget > 0:
+            total_budget = overall_budget
+        else:
+            budget_query = select(func.coalesce(func.sum(Budget.amount), 0)).where(*budget_filter)
+            total_budget = float((await db.execute(budget_query)).scalar_one())
+
+        total_spend = float(totals.total_spend)
+
         return AnalyticsSummary(
-            total_spend=float(totals.total_spend),
+            total_spend=total_spend,
             top_category=top_category,
             top_category_amount=top_category_amount,
             expense_count=totals.expense_count,
+            total_budget=total_budget,
+            budget_remaining=round(total_budget - total_spend, 2),
             daily_breakdown=daily_breakdown,
-            monthly_breakdown=periodic_breakdown, # Reusing schema field for all periodic data
+            monthly_breakdown=periodic_breakdown,
         )
     except Exception as e:
         import traceback

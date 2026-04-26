@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Card, Typography, Button, Space, Row, Col, Alert, Steps, Tag, Divider, Spin } from 'antd';
-import { DownloadOutlined, FileExcelOutlined, InfoCircleOutlined, TagsOutlined } from '@ant-design/icons';
+import { DownloadOutlined, TagsOutlined } from '@ant-design/icons';
 import { useDashboard } from '../context/DashboardContext';
 import UploadWidget from '../components/UploadWidget';
 import api from '../services/api';

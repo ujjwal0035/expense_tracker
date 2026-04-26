@@ -1,10 +1,13 @@
-import { Wallet, Receipt, Tag, Calculator } from 'lucide-react';
+import { Wallet, Receipt, Tag, Calculator, Target, TrendingUp, TrendingDown } from 'lucide-react';
 
 const icons = {
   wallet: Wallet,
   receipt: Receipt,
   tag: Tag,
   calculator: Calculator,
+  target: Target,
+  trending: TrendingUp,
+  trendingDown: TrendingDown,
 };
 
 export default function KPIWidget({ title, value, subtitle, icon, color, loading, index = 0 }) {

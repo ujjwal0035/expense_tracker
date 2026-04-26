@@ -34,6 +34,13 @@ class ExpenseBulkCreate(BaseModel):
     expenses: list[ExpenseCreate]
 
 
+class ExpensePage(BaseModel):
+    items: list[ExpenseOut]
+    total: int
+    skip: int
+    limit: int
+
+
 class CategoryBreakdown(BaseModel):
     category: str
     total: float
@@ -55,5 +62,7 @@ class AnalyticsSummary(BaseModel):
     top_category: Optional[str]
     top_category_amount: float
     expense_count: int
+    total_budget: Optional[float] = 0.0
+    budget_remaining: Optional[float] = 0.0
     daily_breakdown: list[DailySummary]
     monthly_breakdown: list[MonthlySummary]

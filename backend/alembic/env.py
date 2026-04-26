@@ -12,6 +12,7 @@ from app.core.database import Base
 from app.models.user import User
 from app.models.expense import Expense
 from app.models.upload_job import UploadJob
+from app.models.budget import Budget
 
 config = context.config
 if config.config_file_name is not None:

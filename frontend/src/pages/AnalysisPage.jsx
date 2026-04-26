@@ -65,6 +65,20 @@ export default function AnalysisPage() {
     }
   };
 
+  const applyQuickRange = (range) => {
+    const today = dayjs();
+    const ranges = {
+      month: [today.startOf('month'), today.endOf('month')],
+      last30: [today.subtract(29, 'day'), today],
+      year: [today.startOf('year'), today.endOf('year')],
+    };
+    const [start, end] = ranges[range];
+    setDateRange({
+      startDate: start.format('YYYY-MM-DD'),
+      endDate: end.format('YYYY-MM-DD'),
+    });
+  };
+
   const tableColumns = [
     {
       title: 'Category',
@@ -259,6 +273,20 @@ export default function AnalysisPage() {
               <Option value="quarter">Quarter Wise</Option>
               <Option value="year">Year Wise</Option>
             </Select>
+            <Button
+              className="h-[46px] rounded-xl font-semibold"
+              onClick={() => applyQuickRange('month')}
+              size="large"
+            >
+              This Month
+            </Button>
+            <Button
+              className="h-[46px] rounded-xl font-semibold"
+              onClick={() => applyQuickRange('last30')}
+              size="large"
+            >
+              Last 30 Days
+            </Button>
             <RangePicker
               className="h-[46px] rounded-xl shadow-sm"
               style={{ backgroundColor: 'var(--color-bg-primary)', borderColor: 'var(--color-border)' }}

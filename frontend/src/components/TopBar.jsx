@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { Wallet, Menu, X, Sun, Moon } from 'lucide-react';
-import { Dropdown, Avatar, Space, Typography, Button, Switch } from 'antd';
+import { Dropdown, Avatar, Space, Typography, Switch } from 'antd';
 import {
   HomeOutlined,
   BarChartOutlined,
@@ -9,8 +9,7 @@ import {
   SettingOutlined,
   LogoutOutlined,
   UserOutlined,
-  DownOutlined,
-  BulbOutlined
+  DownOutlined
 } from '@ant-design/icons';
 import { useTheme } from '../context/ThemeContext';
 

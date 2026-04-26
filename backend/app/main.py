@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import get_settings
-from app.api import auth, expenses, analytics, upload, admin, categories
+from app.api import auth, expenses, analytics, upload, admin, categories, budgets
 
 import sys
 import asyncio
@@ -47,6 +47,7 @@ app.include_router(analytics.router)
 app.include_router(upload.router)
 app.include_router(admin.router)
 app.include_router(categories.router)
+app.include_router(budgets.router)
 
 
 @app.get("/health")

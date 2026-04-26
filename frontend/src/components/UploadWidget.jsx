@@ -1,6 +1,6 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Upload, Progress, Typography, Space, Button, Alert, Card, Result } from 'antd';
-import { InboxOutlined, CheckCircleFilled, CloseCircleFilled, LoadingOutlined, ReloadOutlined } from '@ant-design/icons';
+import { InboxOutlined, LoadingOutlined, ReloadOutlined } from '@ant-design/icons';
 import toast from 'react-hot-toast';
 import api from '../services/api';
 import { useSSE } from '../hooks/useSSE';

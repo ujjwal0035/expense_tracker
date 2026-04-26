@@ -31,6 +31,7 @@ class User(Base):
     # Relationships
     expenses = relationship("Expense", back_populates="user", cascade="all, delete-orphan")
     upload_jobs = relationship("UploadJob", back_populates="user", cascade="all, delete-orphan")
+    budgets = relationship("Budget", back_populates="user", cascade="all, delete-orphan")
 
     def __repr__(self) -> str:
         return f"<User {self.email}>"
