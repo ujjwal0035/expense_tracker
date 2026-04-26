@@ -26,8 +26,12 @@ async def process_csv_upload(job_id: uuid.UUID, user_id: uuid.UUID, file_content
             job.status = "PROCESSING"
             await db.commit()
 
-            # Parse CSV
-            text = file_content.decode("utf-8")
+            # Parse CSV with encoding fallback
+            try:
+                text = file_content.decode("utf-8")
+            except UnicodeDecodeError:
+                # Fallback to latin-1 which accepts all byte values
+                text = file_content.decode("latin-1", errors="replace")
             reader = csv.DictReader(io.StringIO(text))
             rows = list(reader)
 
@@ -49,11 +53,35 @@ async def process_csv_upload(job_id: uuid.UUID, user_id: uuid.UUID, file_content
                     # Normalize column names (strip whitespace, lowercase)
                     normalized = {k.strip().lower(): v.strip() for k, v in row.items()}
 
+                    # Robust Column Mapping
+                    def get_val(keys, default=""):
+                        for k in keys:
+                            if k in normalized: return normalized[k]
+                        return default
+
+                    raw_date = get_val(["expense_date", "date", "expense date"])
+                    raw_amount = get_val(["amount", "amt", "value", "cost"], "0")
+                    raw_category = get_val(["category", "cat", "type"], "Other")
+                    raw_description = get_val(["description", "desc", "note", "memo"])
+
+                    parsed_date = None
+                    # Try common formats
+                    for fmt in ("%Y-%m-%d", "%d-%m-%Y", "%m-%d-%Y", "%d/%m/%Y", "%Y/%m/%d", "%b %d, %Y", "%d %b, %Y"):
+                        try:
+                            from datetime import datetime
+                            parsed_date = datetime.strptime(raw_date, fmt).date()
+                            break
+                        except ValueError:
+                            continue
+                    
+                    if not parsed_date:
+                        raise ValueError(f"Invalid date format: {raw_date}. Supported: YYYY-MM-DD, DD-MM-YYYY, MM-DD-YYYY")
+
                     expense_data = ExpenseCreate(
-                        amount=float(normalized.get("amount", 0)),
-                        category=normalized.get("category", ""),
-                        expense_date=normalized.get("expense_date", ""),
-                        description=normalized.get("description", ""),
+                        amount=float(raw_amount.replace(",", "")),
+                        category=raw_category,
+                        expense_date=parsed_date,
+                        description=raw_description,
                     )
                     validated_expenses.append(expense_data)
                 except Exception as e:

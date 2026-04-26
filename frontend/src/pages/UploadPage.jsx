@@ -1,21 +1,44 @@
 import { useState, useEffect } from 'react';
-import { Card, Typography, Button, Space, Row, Col, Alert, Steps, Tag } from 'antd';
-import { DownloadOutlined, FileExcelOutlined, InfoCircleOutlined } from '@ant-design/icons';
+import { Card, Typography, Button, Space, Row, Col, Alert, Steps, Tag, Divider, Spin } from 'antd';
+import { DownloadOutlined, FileExcelOutlined, InfoCircleOutlined, TagsOutlined } from '@ant-design/icons';
 import { useDashboard } from '../context/DashboardContext';
 import UploadWidget from '../components/UploadWidget';
+import api from '../services/api';
 
 const { Title, Text, Paragraph } = Typography;
 
 export default function UploadPage() {
   const { triggerRefresh } = useDashboard();
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  const fetchCategories = async () => {
+    setLoading(true);
+    try {
+      const { data } = await api.get('/categories/');
+      setCategories(data);
+    } catch (err) {
+      console.error('Failed to fetch categories:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const downloadSampleCSV = () => {
     const headers = ['amount', 'category', 'expense_date', 'description'];
+    
+    // Use live categories for the sample rows
+    const liveCats = categories.length > 0 ? categories.map(c => c.name) : ['Food', 'Transport', 'Travel', 'Shopping'];
+    
     const rows = [
-      ['150.50', 'Food', '2023-10-25', 'Dinner at restaurant'],
-      ['20.00', 'Transport', '2023-10-24', 'Taxi to office'],
-      ['500.00', 'Travel', '2023-10-22', 'Flight ticket'],
-      ['12.99', 'Shopping', '2023-10-21', 'Groceries'],
+      ['150.50', liveCats[0] || 'Food', '20-04-2026', 'Dinner at restaurant'],
+      ['20.00', liveCats[1] || liveCats[0], '24-04-2026', 'Taxi to office'],
+      ['500.00', liveCats[2] || liveCats[0], '23-04-2026', 'Stock Investment'],
+      ['12.99', liveCats[3] || liveCats[0], '22-04-2026', 'Monthly Groceries'],
     ];
 
     const csvContent = [
@@ -52,10 +75,11 @@ export default function UploadPage() {
             size="large"
             icon={<DownloadOutlined />}
             onClick={downloadSampleCSV}
+            loading={loading}
             className="h-[52px] px-8 rounded-xl font-bold"
             style={{ background: '#6c63ff', borderColor: '#6c63ff' }}
           >
-            Download Sample
+            Download Live Template
           </Button>
         </div>
       </div>
@@ -65,32 +89,62 @@ export default function UploadPage() {
           <UploadWidget onUploadComplete={triggerRefresh} />
         </Col>
         <Col xs={24} lg={8}>
-          <Card className="rounded-3xl shadow-sm border-slate-100 h-full">
-            <Title level={4}>Instructions</Title>
-            <Steps
-              direction="vertical"
-              size="small"
-              current={0}
-              items={[
-                {
-                  title: 'Download Template',
-                  description: 'Use our sample CSV to ensure correct formatting.',
-                },
-                {
-                  title: 'Prepare Data',
-                  description: 'Fill in your expenses. Ensure dates are YYYY-MM-DD.',
-                },
-                {
-                  title: 'Upload File',
-                  description: 'Drag your file into the upload zone.',
-                },
-                {
-                  title: 'Success!',
-                  description: 'Expenses will be automatically added to your dashboard.',
-                },
-              ]}
-            />
-          </Card>
+          <Space direction="vertical" className="w-full" size="large">
+            <Card className="rounded-3xl shadow-sm border-slate-100">
+              <Title level={4}>Instructions</Title>
+              <Steps
+                direction="vertical"
+                size="small"
+                current={0}
+                items={[
+                  {
+                    title: 'Download Template',
+                    description: 'Use our sample CSV which contains your current categories.',
+                  },
+                  {
+                    title: 'Prepare Data',
+                    description: 'Fill in expenses. Supported formats: YYYY-MM-DD or DD-MM-YYYY.',
+                  },
+                  {
+                    title: 'Upload File',
+                    description: 'Drag your file into the upload zone.',
+                  },
+                  {
+                    title: 'Success!',
+                    description: 'Expenses will be automatically added to your dashboard.',
+                  },
+                ]}
+              />
+            </Card>
+
+            <Card className="rounded-3xl shadow-sm border-slate-100">
+              <div className="flex items-center justify-between mb-4">
+                <Title level={5} style={{ margin: 0 }}>
+                  <TagsOutlined className="text-[#6c63ff] mr-2" />
+                  Supported Categories
+                </Title>
+                {loading && <Spin size="small" />}
+              </div>
+              <Text type="secondary" className="text-xs mb-4 block">
+                Your CSV must use these exact category names:
+              </Text>
+              <div className="flex flex-wrap gap-2">
+                {categories.map(cat => (
+                  <Tag key={cat.id} className="rounded-lg border-none bg-slate-100 text-slate-600 px-3 py-1 font-semibold">
+                    {cat.name}
+                  </Tag>
+                ))}
+              </div>
+              <Divider className="my-4" />
+              <Alert
+                message="Pro Tip"
+                description="If you need a new category, add it in Account Settings first!"
+                type="info"
+                showIcon
+                className="rounded-xl border-none bg-[#6c63ff]/5 text-[#6c63ff]"
+              />
+            </Card>
+          </Space>
         </Col>
       </Row>
     </div>

@@ -18,9 +18,17 @@ class UserOut(BaseModel):
     username: str
     full_name: str
     mobile: Optional[str]
+    role: str
     created_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+class UserUpdate(BaseModel):
+    full_name: Optional[str] = None
+    username: Optional[str] = None
+    mobile: Optional[str] = None
+    password: Optional[str] = None
 
 
 class Token(BaseModel):

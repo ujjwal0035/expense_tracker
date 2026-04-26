@@ -140,15 +140,14 @@ export default function DashboardPage() {
         <ExpenseTable onDelete={triggerRefresh} />
       </div>
 
-      {showAddModal && (
-        <AddExpenseModal
-          onClose={() => setShowAddModal(false)}
-          onSuccess={() => {
-            setShowAddModal(false);
-            triggerRefresh();
-          }}
-        />
-      )}
+      <AddExpenseModal
+        open={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        onSuccess={() => {
+          setShowAddModal(false);
+          triggerRefresh();
+        }}
+      />
     </div>
   );
 }

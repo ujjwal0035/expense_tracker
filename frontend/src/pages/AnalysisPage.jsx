@@ -1,18 +1,20 @@
 import { useState, useEffect } from 'react';
-import { DatePicker, Space, Button, Card, Tabs, Table, Tag, Progress, Typography, Row, Col } from 'antd';
+import { DatePicker, Space, Button, Card, Tabs, Table, Tag, Progress, Typography, Row, Col, Select } from 'antd';
 import dayjs from 'dayjs';
 import { useDashboard } from '../context/DashboardContext';
 import CategoryPieChart from '../components/CategoryPieChart';
 import MonthlyTrendLine from '../components/MonthlyTrendLine';
 import api from '../services/api';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Cell, Legend } from 'recharts';
+import { CalendarOutlined, BarChartOutlined, LineChartOutlined, PieChartOutlined } from '@ant-design/icons';
 
 const { RangePicker } = DatePicker;
 const { Title, Text } = Typography;
+const { Option } = Select;
 
 const COLORS = [
   '#6c63ff', '#10b981', '#f59e0b', '#ef4444', '#3b82f6',
-  '#ec4899', '#8b5cf6', '#14b8a6', '#f97316', '#06b6d4',
+  '#ec4899', '#8b5cf6', '#14b8a6', '#f97316', '#06b6d4', '#84cc16'
 ];
 
 export default function AnalysisPage() {
@@ -21,15 +23,16 @@ export default function AnalysisPage() {
   const [categoryData, setCategoryData] = useState([]);
   const [stackedData, setStackedData] = useState({ data: [], categories: [] });
   const [loading, setLoading] = useState(true);
+  const [groupBy, setGroupBy] = useState('month');
 
   useEffect(() => {
     fetchAnalytics();
-  }, [dateRange, refreshTrigger]);
+  }, [dateRange, refreshTrigger, groupBy]);
 
   const fetchAnalytics = async () => {
     setLoading(true);
     try {
-      const params = {};
+      const params = { group_by: groupBy };
       if (dateRange.startDate) params.start_date = dateRange.startDate;
       if (dateRange.endDate) params.end_date = dateRange.endDate;
 
@@ -100,23 +103,45 @@ export default function AnalysisPage() {
   const tabItems = [
     {
       key: 'visual',
-      label: 'Visual Analytics',
+      label: <Space><BarChartOutlined /> Visual Analytics</Space>,
       children: (
         <div className="space-y-10">
           <Row gutter={[32, 32]}>
             <Col xs={24} lg={12}>
               <Card 
-                title={<Title level={5}>Line Chart: Monthly Spending Trend</Title>}
+                title={<Space><BarChartOutlined className="text-[#f59e0b]" /> <Title level={5} style={{ margin: 0 }}>Top Categories Comparison</Title></Space>}
                 className="rounded-3xl shadow-sm border-slate-100 h-full"
               >
-                <div className="h-[350px]">
-                  <MonthlyTrendLine data={summary?.monthly_breakdown || []} loading={loading} />
+                <div className="h-[350px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={categoryData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                      <XAxis 
+                        dataKey="category" 
+                        angle={-45} 
+                        textAnchor="end" 
+                        interval={0} 
+                        height={60}
+                        tick={{ fontSize: 10, fill: '#64748b' }}
+                      />
+                      <YAxis tick={{ fontSize: 10, fill: '#64748b' }} tickFormatter={(v) => `₹${v}`} />
+                      <RechartsTooltip 
+                        contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
+                        formatter={(value) => [`₹${value.toLocaleString('en-IN')}`, 'Spend']}
+                      />
+                      <Bar dataKey="total" radius={[8, 8, 0, 0]} barSize={32}>
+                        {categoryData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
                 </div>
               </Card>
             </Col>
             <Col xs={24} lg={12}>
               <Card 
-                title={<Title level={5}>Donut Chart: Category Distribution</Title>}
+                title={<Space><PieChartOutlined className="text-[#10b981]" /> <Title level={5} style={{ margin: 0 }}>Category Distribution</Title></Space>}
                 className="rounded-3xl shadow-sm border-slate-100 h-full"
               >
                 <div className="h-[350px]">
@@ -129,39 +154,17 @@ export default function AnalysisPage() {
           <Row gutter={[32, 32]}>
             <Col xs={24} lg={12}>
               <Card 
-                title={<Title level={5}>Bar Chart: Top Categories Comparison</Title>}
-                className="rounded-3xl shadow-sm border-slate-100"
+                title={<Space><LineChartOutlined className="text-[#6c63ff]" /> <Title level={5} style={{ margin: 0 }}>Spending Trend ({groupBy.charAt(0).toUpperCase() + groupBy.slice(1)} Wise)</Title></Space>}
+                className="rounded-3xl shadow-sm border-slate-100 h-full"
               >
-                <div className="h-[400px] w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={categoryData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                      <XAxis 
-                        dataKey="category" 
-                        angle={-45} 
-                        textAnchor="end" 
-                        interval={0} 
-                        height={60}
-                        tick={{ fontSize: 12, fill: '#64748b' }}
-                      />
-                      <YAxis tick={{ fontSize: 12, fill: '#64748b' }} tickFormatter={(v) => `₹${v}`} />
-                      <RechartsTooltip 
-                        contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
-                        formatter={(value) => [`₹${value.toLocaleString('en-IN')}`, 'Spend']}
-                      />
-                      <Bar dataKey="total" radius={[8, 8, 0, 0]} barSize={40}>
-                        {categoryData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
+                <div className="h-[400px]">
+                  <MonthlyTrendLine data={summary?.monthly_breakdown || []} loading={loading} />
                 </div>
               </Card>
             </Col>
             <Col xs={24} lg={12}>
               <Card 
-                title={<Title level={5}>Stacked Bar Chart: Categories Over Time</Title>}
+                title={<Space><BarChartOutlined className="text-[#ef4444]" /> <Title level={5} style={{ margin: 0 }}>Categories Over Time ({groupBy})</Title></Space>}
                 className="rounded-3xl shadow-sm border-slate-100"
               >
                 <div className="h-[400px] w-full">
@@ -169,7 +172,7 @@ export default function AnalysisPage() {
                     <BarChart data={stackedData.data} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                       <XAxis 
-                        dataKey="month" 
+                        dataKey="period" 
                         tick={{ fontSize: 12, fill: '#64748b' }}
                       />
                       <YAxis tick={{ fontSize: 12, fill: '#64748b' }} tickFormatter={(v) => `₹${v}`} />
@@ -198,7 +201,7 @@ export default function AnalysisPage() {
     },
     {
       key: 'table',
-      label: 'Tabular Breakdown & Progress',
+      label: <Space><CalendarOutlined /> Tabular Breakdown</Space>,
       children: (
         <Card className="rounded-3xl shadow-sm border-slate-100 overflow-hidden">
           <Table 
@@ -222,24 +225,38 @@ export default function AnalysisPage() {
           <p className="text-slate-500">Comprehensive view of your financial ecosystem</p>
         </div>
 
-        <Space size="middle">
-          <RangePicker
-            className="h-[46px] rounded-xl border-slate-200 shadow-sm"
-            value={dateRange.startDate ? [dayjs(dateRange.startDate), dayjs(dateRange.endDate)] : null}
-            onChange={handleDateChange}
-            format="DD MMM, YYYY"
-            size="large"
-          />
-          <Button 
-            className="h-[46px] rounded-xl font-semibold px-6"
-            onClick={() => setDateRange({ startDate: '', endDate: '' })}
-            type={!dateRange.startDate ? "primary" : "default"}
-            style={!dateRange.startDate ? { background: '#6c63ff', borderColor: '#6c63ff' } : {}}
-            size="large"
-          >
-            All Time
-          </Button>
-        </Space>
+        <div className="flex flex-wrap items-center gap-4">
+          <Space size="middle">
+            <Select
+              value={groupBy}
+              onChange={setGroupBy}
+              className="h-[46px] w-[140px]"
+              dropdownStyle={{ borderRadius: '12px' }}
+            >
+              <Option value="day">Day Wise</Option>
+              <Option value="week">Week Wise</Option>
+              <Option value="month">Month Wise</Option>
+              <Option value="quarter">Quarter Wise</Option>
+              <Option value="year">Year Wise</Option>
+            </Select>
+            <RangePicker
+              className="h-[46px] rounded-xl border-slate-200 shadow-sm"
+              value={dateRange.startDate ? [dayjs(dateRange.startDate), dayjs(dateRange.endDate)] : null}
+              onChange={handleDateChange}
+              format="DD MMM, YYYY"
+              size="large"
+            />
+            <Button 
+              className="h-[46px] rounded-xl font-semibold px-6"
+              onClick={() => setDateRange({ startDate: '', endDate: '' })}
+              type={!dateRange.startDate ? "primary" : "default"}
+              style={!dateRange.startDate ? { background: '#6c63ff', borderColor: '#6c63ff' } : {}}
+              size="large"
+            >
+              All Time
+            </Button>
+          </Space>
+        </div>
       </div>
 
       <Tabs 

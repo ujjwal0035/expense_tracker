@@ -3,7 +3,7 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, Query, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, case
+from sqlalchemy import select, func, case, String
 
 from app.core.database import get_db
 from app.core.security import get_current_user
@@ -18,10 +18,11 @@ router = APIRouter(prefix="/api/v1/analytics", tags=["Analytics"])
 async def get_summary(
     start_date: Optional[date] = Query(None),
     end_date: Optional[date] = Query(None),
+    group_by: str = Query("month", enum=["day", "week", "month", "quarter", "year"]),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Get aggregated analytics summary with daily and monthly breakdowns."""
+    """Get aggregated analytics summary with dynamic periodic breakdowns."""
     try:
         # Base filter
         base_filter = [Expense.user_id == current_user.id]
@@ -53,7 +54,37 @@ async def get_summary(
         top_category = top_cat_result.category if top_cat_result else None
         top_category_amount = float(top_cat_result.cat_total) if top_cat_result else 0.0
 
-        # Daily breakdown
+        # Periodic breakdown logic
+        if group_by == "day":
+            period_expr = func.to_char(Expense.expense_date, "YYYY-MM-DD")
+        elif group_by == "week":
+            period_expr = func.to_char(func.date_trunc('week', Expense.expense_date), "IYYY-\"W\"IW")
+        elif group_by == "quarter":
+            period_expr = func.concat(
+                func.to_char(Expense.expense_date, "YYYY"),
+                "-Q",
+                func.ceil(func.extract('month', Expense.expense_date) / 3).cast(String)
+            )
+        elif group_by == "year":
+            period_expr = func.to_char(Expense.expense_date, "YYYY")
+        else: # default month
+            period_expr = func.to_char(Expense.expense_date, "YYYY-MM")
+
+        periodic_query = (
+            select(
+                period_expr.label("period"),
+                func.sum(Expense.amount).label("total"),
+            )
+            .where(*base_filter)
+            .group_by(period_expr)
+            .order_by(period_expr)
+        )
+        periodic_rows = (await db.execute(periodic_query)).all()
+        periodic_breakdown = [
+            MonthlySummary(month=row.period, total=float(row.total)) for row in periodic_rows
+        ]
+
+        # Daily breakdown (for sparklines)
         daily_query = (
             select(
                 Expense.expense_date.label("date"),
@@ -68,29 +99,13 @@ async def get_summary(
             DailySummary(date=row.date, total=float(row.total)) for row in daily_rows
         ]
 
-        # Monthly breakdown
-        month_expr = func.to_char(Expense.expense_date, "YYYY-MM")
-        monthly_query = (
-            select(
-                month_expr.label("month"),
-                func.sum(Expense.amount).label("total"),
-            )
-            .where(*base_filter)
-            .group_by(month_expr)
-            .order_by(month_expr)
-        )
-        monthly_rows = (await db.execute(monthly_query)).all()
-        monthly_breakdown = [
-            MonthlySummary(month=row.month, total=float(row.total)) for row in monthly_rows
-        ]
-
         return AnalyticsSummary(
             total_spend=float(totals.total_spend),
             top_category=top_category,
             top_category_amount=top_category_amount,
             expense_count=totals.expense_count,
             daily_breakdown=daily_breakdown,
-            monthly_breakdown=monthly_breakdown,
+            monthly_breakdown=periodic_breakdown, # Reusing schema field for all periodic data
         )
     except Exception as e:
         import traceback
@@ -151,39 +166,54 @@ async def get_category_breakdown(
 async def get_stacked_data(
     start_date: Optional[date] = Query(None),
     end_date: Optional[date] = Query(None),
+    group_by: str = Query("month", enum=["day", "week", "month", "quarter", "year"]),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Get category breakdown per month for stacked bar charts."""
+    """Get category breakdown per period for stacked bar charts."""
     base_filter = [Expense.user_id == current_user.id]
     if start_date:
         base_filter.append(Expense.expense_date >= start_date)
     if end_date:
         base_filter.append(Expense.expense_date <= end_date)
 
-    month_expr = func.to_char(Expense.expense_date, "YYYY-MM")
+    # Periodic breakdown logic
+    if group_by == "day":
+        period_expr = func.to_char(Expense.expense_date, "YYYY-MM-DD")
+    elif group_by == "week":
+        period_expr = func.to_char(func.date_trunc('week', Expense.expense_date), "IYYY-\"W\"IW")
+    elif group_by == "quarter":
+        period_expr = func.concat(
+            func.to_char(Expense.expense_date, "YYYY"),
+            "-Q",
+            func.ceil(func.extract('month', Expense.expense_date) / 3).cast(String)
+        )
+    elif group_by == "year":
+        period_expr = func.to_char(Expense.expense_date, "YYYY")
+    else: # default month
+        period_expr = func.to_char(Expense.expense_date, "YYYY-MM")
+
     query = (
         select(
-            month_expr.label("month"),
+            period_expr.label("period"),
             Expense.category,
             func.sum(Expense.amount).label("total"),
         )
         .where(*base_filter)
-        .group_by(month_expr, Expense.category)
-        .order_by(month_expr)
+        .group_by(period_expr, Expense.category)
+        .order_by(period_expr)
     )
     rows = (await db.execute(query)).all()
 
     # Reformat for Recharts stacked bar
-    # Expected: [{ month: '2023-01', Food: 100, Travel: 200 }, ...]
     data_map = {}
     categories = set()
 
     for row in rows:
-        if row.month not in data_map:
-            data_map[row.month] = {"month": row.month}
-        data_map[row.month][row.category] = float(row.total)
+        if row.period not in data_map:
+            data_map[row.period] = {"period": row.period}
+        data_map[row.period][row.category] = float(row.total)
         categories.add(row.category)
 
-    result = sorted(data_map.values(), key=lambda x: x["month"])
+    result = sorted(data_map.values(), key=lambda x: x["period"])
     return {"data": result, "categories": list(categories)}
