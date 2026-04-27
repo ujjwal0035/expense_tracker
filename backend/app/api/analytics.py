@@ -101,40 +101,58 @@ async def get_summary(
             DailySummary(date=row.date, total=float(row.total)) for row in daily_rows
         ]
 
-        # Budget Calculation
-        # For simplicity, we calculate budget for the current month if no range is specified
-        # If range is specified, we look for budgets in those months
-        budget_filter = [Budget.user_id == current_user.id]
+        # Budget Calculation (Month-Based)
+        # We calculate the budget by summing up the budgets for each month in the range.
+        # If a month has no specific budget, we fallback to the latest known budget configuration.
+        
+        # 1. Identify months in range
         if start_date and end_date:
-            # Get months in range
-            start_month = start_date.strftime("%Y-%m")
-            end_month = end_date.strftime("%Y-%m")
-            budget_filter.append(Budget.month >= start_month)
-            budget_filter.append(Budget.month <= end_month)
+            months_in_range = []
+            curr = start_date.replace(day=1)
+            while curr <= end_date:
+                months_in_range.append(curr.strftime("%Y-%m"))
+                # Move to next month
+                if curr.month == 12:
+                    curr = curr.replace(year=curr.year + 1, month=1)
+                else:
+                    curr = curr.replace(month=curr.month + 1)
         else:
-            budget_filter.append(Budget.month == date.today().strftime("%Y-%m"))
+            # Default to current month if no range
+            months_in_range = [date.today().strftime("%Y-%m")]
 
-        overall_budget_query = (
-            select(func.coalesce(func.sum(Budget.amount), 0))
-            .where(*budget_filter, Budget.category == OVERALL_BUDGET_CATEGORY)
+        # 2. Get the "Default/Latest" budget configuration for fallback
+        latest_config_query = (
+            select(Budget.category, Budget.amount)
+            .where(Budget.user_id == current_user.id)
+            .distinct(Budget.category)
+            .order_by(Budget.category, Budget.month.desc())
         )
-        overall_budget = float((await db.execute(overall_budget_query)).scalar_one())
+        latest_config = (await db.execute(latest_config_query)).all()
+        default_monthly_total = sum(float(b.amount) for b in latest_config)
 
-        if overall_budget > 0:
-            total_budget = overall_budget
-        else:
-            budget_query = select(func.coalesce(func.sum(Budget.amount), 0)).where(*budget_filter)
-            total_budget = float((await db.execute(budget_query)).scalar_one())
-
-        total_spend = float(totals.total_spend)
+        # 3. Calculate total budget for the period
+        total_period_budget = 0.0
+        for m in months_in_range:
+            # Check if there's a specific budget for this month
+            m_budget_query = select(func.sum(Budget.amount)).where(
+                Budget.user_id == current_user.id,
+                Budget.month == m
+            )
+            m_budget = (await db.execute(m_budget_query)).scalar()
+            
+            if m_budget is not None:
+                total_period_budget += float(m_budget)
+            else:
+                # Fallback to the latest known monthly configuration
+                total_period_budget += default_monthly_total
 
         return AnalyticsSummary(
-            total_spend=total_spend,
+            total_spend=float(totals.total_spend),
             top_category=top_category,
             top_category_amount=top_category_amount,
             expense_count=totals.expense_count,
-            total_budget=total_budget,
-            budget_remaining=round(total_budget - total_spend, 2),
+            total_budget=round(total_period_budget, 2),
+            budget_remaining=max(0, round(total_period_budget - float(totals.total_spend), 2)),
             daily_breakdown=daily_breakdown,
             monthly_breakdown=periodic_breakdown,
         )

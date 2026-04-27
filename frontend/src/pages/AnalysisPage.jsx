@@ -121,10 +121,10 @@ export default function AnalysisPage() {
       key: 'visual',
       label: <Space style={{ color: 'inherit' }}><BarChartOutlined /> Visual Analytics</Space>,
       children: (
-        <div className="space-y-10">
+        <div className="space-y-10" style={{ marginBottom: "20px" }}>
           <Row gutter={[32, 32]}>
             <Col xs={24} lg={12}>
-              <Card 
+              <Card
                 title={<Space><BarChartOutlined style={{ color: '#f59e0b' }} /> <Title level={5} style={{ margin: 0, color: 'var(--color-text-primary)' }}>Top Categories Comparison</Title></Space>}
                 style={{ borderRadius: '24px', borderColor: 'var(--color-border)' }}
                 className="shadow-sm h-full"
@@ -133,20 +133,20 @@ export default function AnalysisPage() {
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={categoryData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDarkMode ? '#334155' : '#f1f5f9'} />
-                      <XAxis 
-                        dataKey="category" 
-                        angle={-45} 
-                        textAnchor="end" 
-                        interval={0} 
+                      <XAxis
+                        dataKey="category"
+                        angle={-45}
+                        textAnchor="end"
+                        interval={0}
                         height={60}
                         tick={{ fontSize: 10, fill: isDarkMode ? '#94a3b8' : '#64748b' }}
                       />
                       <YAxis tick={{ fontSize: 10, fill: isDarkMode ? '#94a3b8' : '#64748b' }} tickFormatter={(v) => `₹${v}`} />
-                      <RechartsTooltip 
-                        contentStyle={{ 
-                          backgroundColor: 'var(--color-bg-card)', 
-                          borderRadius: '12px', 
-                          border: '1px solid var(--color-border)', 
+                      <RechartsTooltip
+                        contentStyle={{
+                          backgroundColor: 'var(--color-bg-card)',
+                          borderRadius: '12px',
+                          border: '1px solid var(--color-border)',
                           boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)',
                           color: 'var(--color-text-primary)'
                         }}
@@ -164,7 +164,7 @@ export default function AnalysisPage() {
               </Card>
             </Col>
             <Col xs={24} lg={12}>
-              <Card 
+              <Card
                 title={<Space><PieChartOutlined style={{ color: '#10b981' }} /> <Title level={5} style={{ margin: 0, color: 'var(--color-text-primary)' }}>Category Distribution</Title></Space>}
                 style={{ borderRadius: '24px', borderColor: 'var(--color-border)' }}
                 className="shadow-sm h-full"
@@ -176,9 +176,11 @@ export default function AnalysisPage() {
             </Col>
           </Row>
 
+          <div style={{ marginTop: "40px" }}></div>
+
           <Row gutter={[32, 32]}>
             <Col xs={24} lg={12}>
-              <Card 
+              <Card
                 title={<Space><LineChartOutlined style={{ color: '#6c63ff' }} /> <Title level={5} style={{ margin: 0, color: 'var(--color-text-primary)' }}>Spending Trend ({groupBy.charAt(0).toUpperCase() + groupBy.slice(1)} Wise)</Title></Space>}
                 style={{ borderRadius: '24px', borderColor: 'var(--color-border)' }}
                 className="shadow-sm h-full"
@@ -189,7 +191,7 @@ export default function AnalysisPage() {
               </Card>
             </Col>
             <Col xs={24} lg={12}>
-              <Card 
+              <Card
                 title={<Space><BarChartOutlined style={{ color: '#ef4444' }} /> <Title level={5} style={{ margin: 0, color: 'var(--color-text-primary)' }}>Categories Over Time ({groupBy})</Title></Space>}
                 style={{ borderRadius: '24px', borderColor: 'var(--color-border)' }}
                 className="shadow-sm h-full"
@@ -198,16 +200,16 @@ export default function AnalysisPage() {
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={stackedData.data} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDarkMode ? '#334155' : '#f1f5f9'} />
-                      <XAxis 
-                        dataKey="period" 
+                      <XAxis
+                        dataKey="period"
                         tick={{ fontSize: 12, fill: isDarkMode ? '#94a3b8' : '#64748b' }}
                       />
                       <YAxis tick={{ fontSize: 12, fill: isDarkMode ? '#94a3b8' : '#64748b' }} tickFormatter={(v) => `₹${v}`} />
-                      <RechartsTooltip 
-                        contentStyle={{ 
-                          backgroundColor: 'var(--color-bg-card)', 
-                          borderRadius: '12px', 
-                          border: '1px solid var(--color-border)', 
+                      <RechartsTooltip
+                        contentStyle={{
+                          backgroundColor: 'var(--color-bg-card)',
+                          borderRadius: '12px',
+                          border: '1px solid var(--color-border)',
                           boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)',
                           color: 'var(--color-text-primary)'
                         }}
@@ -216,11 +218,11 @@ export default function AnalysisPage() {
                       />
                       <Legend wrapperStyle={{ paddingTop: '20px' }} />
                       {stackedData.categories.map((cat, index) => (
-                        <Bar 
-                          key={cat} 
-                          dataKey={cat} 
-                          stackId="a" 
-                          fill={COLORS[index % COLORS.length]} 
+                        <Bar
+                          key={cat}
+                          dataKey={cat}
+                          stackId="a"
+                          fill={COLORS[index % COLORS.length]}
                           radius={index === stackedData.categories.length - 1 ? [4, 4, 0, 0] : [0, 0, 0, 0]}
                         />
                       ))}
@@ -238,9 +240,9 @@ export default function AnalysisPage() {
       label: <Space style={{ color: 'inherit' }}><CalendarOutlined /> Tabular Breakdown</Space>,
       children: (
         <Card style={{ borderRadius: '24px', borderColor: 'var(--color-border)', overflow: 'hidden' }}>
-          <Table 
-            columns={tableColumns} 
-            dataSource={categoryData} 
+          <Table
+            columns={tableColumns}
+            dataSource={categoryData}
             rowKey="category"
             pagination={false}
             loading={loading}
@@ -295,7 +297,7 @@ export default function AnalysisPage() {
               format="DD MMM, YYYY"
               size="large"
             />
-            <Button 
+            <Button
               className="h-[46px] rounded-xl font-semibold px-6"
               onClick={() => setDateRange({ startDate: '', endDate: '' })}
               type={!dateRange.startDate ? "primary" : "default"}
@@ -308,9 +310,9 @@ export default function AnalysisPage() {
         </div>
       </div>
 
-      <Tabs 
-        defaultActiveKey="visual" 
-        items={tabItems} 
+      <Tabs
+        defaultActiveKey="visual"
+        items={tabItems}
         className="analytics-tabs"
         size="large"
       />

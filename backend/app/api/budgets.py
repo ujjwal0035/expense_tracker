@@ -179,3 +179,49 @@ async def delete_budget(
     if not budget:
         raise HTTPException(status_code=404, detail="Budget not found")
     await db.delete(budget)
+
+
+@router.post("/clone", status_code=status.HTTP_201_CREATED)
+async def clone_budgets(
+    target_month: str = Query(..., pattern=r"^\d{4}-\d{2}$"),
+    source_month: Optional[str] = Query(None, pattern=r"^\d{4}-\d{2}$"),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Copy budgets from one month to another."""
+    if not source_month:
+        year, month_num = month_parts(target_month)
+        if month_num == 1:
+            source_month = f"{year - 1}-12"
+        else:
+            source_month = f"{year}-{month_num - 1:02d}"
+
+    result = await db.execute(
+        select(Budget).where(Budget.user_id == current_user.id, Budget.month == source_month)
+    )
+    source_budgets = result.scalars().all()
+
+    if not source_budgets:
+        raise HTTPException(status_code=404, detail=f"No budgets found in {source_month} to clone")
+
+    existing_result = await db.execute(
+        select(Budget.category).where(Budget.user_id == current_user.id, Budget.month == target_month)
+    )
+    existing_categories = set(existing_result.scalars().all())
+
+    cloned_count = 0
+    for b in source_budgets:
+        if b.category not in existing_categories:
+            new_budget = Budget(
+                user_id=current_user.id,
+                category=b.category,
+                month=target_month,
+                amount=b.amount
+            )
+            db.add(new_budget)
+            cloned_count += 1
+
+    if cloned_count == 0:
+        return {"message": "All budgets already exist in target month", "cloned": 0}
+
+    return {"message": f"Cloned {cloned_count} budgets from {source_month}", "cloned": cloned_count}

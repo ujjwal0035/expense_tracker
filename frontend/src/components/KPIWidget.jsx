@@ -43,10 +43,10 @@ export default function KPIWidget({ title, value, subtitle, icon, color, loading
           <Icon size={22} color={color} />
         </div>
         <div className="min-w-0">
-          <p className="text-xs font-medium uppercase tracking-wider mb-1" style={{ color: 'var(--color-text-muted)' }}>
+          <p className="text-xs font-medium uppercase tracking-wider mb-1" style={{ color: 'var(--color-text-muted)', marginBottom: "5px" }}>
             {title}
           </p>
-          <p className="text-xl font-bold truncate" style={{ color: 'var(--color-text-primary)' }}>
+          <p className="text-xl font-bold truncate" style={{ color: 'var(--color-text-primary)', marginBottom: "5px" }}>
             {value}
           </p>
           {subtitle && (

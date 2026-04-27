@@ -24,7 +24,8 @@ import {
   SaveOutlined,
   AppstoreOutlined,
   UsergroupAddOutlined,
-  SearchOutlined
+  SearchOutlined,
+  CopyOutlined
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import api from '../services/api';
@@ -260,6 +261,21 @@ export default function SettingsPage() {
     });
   };
 
+  const handleCloneBudgets = async () => {
+    setBudgetLoading(true);
+    try {
+      const { data } = await api.post('/budgets/clone', null, {
+        params: { target_month: budgetMonth.format('YYYY-MM') },
+      });
+      toast.success(data.message);
+      fetchBudgets();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Failed to clone budgets');
+    } finally {
+      setBudgetLoading(false);
+    }
+  };
+
   const handleCreateBudget = async (values) => {
     try {
       await api.post('/budgets/', {
@@ -295,12 +311,6 @@ export default function SettingsPage() {
     }
   };
 
-  const filteredCategories = useMemo(() => {
-    if (!catSearch) return categories;
-    return categories.filter(c => 
-      c.name.toLowerCase().includes(catSearch.toLowerCase())
-    );
-  }, [categories, catSearch]);
 
   const userColumns = [
     {
@@ -308,7 +318,11 @@ export default function SettingsPage() {
       key: 'user',
       render: (record) => (
         <Space>
-          <Avatar src={`https://api.dicebear.com/7.x/initials/svg?seed=${record.full_name}`} size="small" />
+          <Avatar 
+            src={`https://api.dicebear.com/7.x/initials/svg?seed=${record.full_name}`} 
+            size="small" 
+            style={{ backgroundColor: '#f1f5f9', color: '#64748b' }}
+          />
           <div>
             <div style={{ fontWeight: 'bold', color: 'var(--color-text-primary)' }}>{record.full_name}</div>
             <div style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>{record.email}</div>
@@ -451,16 +465,40 @@ export default function SettingsPage() {
       <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div>
-            <Title level={4} style={{ margin: 0, color: 'var(--color-text-primary)' }}>Monthly Budgets</Title>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <Title level={4} style={{ margin: 0, color: 'var(--color-text-primary)' }}>Monthly Budgets</Title>
+              <Tag color="blue" style={{ borderRadius: '8px', fontSize: '14px', padding: '2px 10px' }}>
+                Total: ₹{budgets.reduce((sum, b) => sum + (b.amount || 0), 0).toLocaleString('en-IN')}
+              </Tag>
+            </div>
             <Text style={{ color: 'var(--color-text-secondary)' }}>Set category limits and track monthly progress</Text>
           </div>
-          <DatePicker
-            picker="month"
-            value={budgetMonth}
-            onChange={(value) => setBudgetMonth(value || dayjs())}
-            format="MMMM YYYY"
-            style={{ width: 180, borderRadius: 12 }}
-          />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <Popconfirm
+              title="Clone budgets?"
+              description="This will copy all budget settings from the previous month. Only new categories will be added."
+              onConfirm={handleCloneBudgets}
+              okText="Yes, Clone"
+              cancelText="No"
+              disabled={budgetLoading || budgets.length > 0}
+            >
+              <Button 
+                icon={<CopyOutlined />} 
+                disabled={budgetLoading || budgets.length > 0}
+                style={{ height: 40, borderRadius: 12 }}
+                className="font-medium"
+              >
+                Copy Previous
+              </Button>
+            </Popconfirm>
+            <DatePicker
+              picker="month"
+              value={budgetMonth}
+              onChange={(value) => setBudgetMonth(value || dayjs())}
+              format="MMMM YYYY"
+              style={{ width: 180, borderRadius: 12, height: 40 }}
+            />
+          </div>
         </div>
 
         <Form
@@ -529,7 +567,7 @@ export default function SettingsPage() {
               <Avatar
                 size={120}
                 icon={<UserOutlined />}
-                style={{ backgroundColor: 'rgba(108, 99, 255, 0.1)', color: '#6c63ff', border: '4px solid var(--color-bg-card)', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)' }}
+                style={{ backgroundColor: '#f1f5f9', color: '#64748b', border: '4px solid var(--color-bg-card)', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)' }}
                 src={`https://api.dicebear.com/7.x/initials/svg?seed=${profile?.full_name || 'User'}`}
               />
               <div style={{ textAlign: 'left' }}>
