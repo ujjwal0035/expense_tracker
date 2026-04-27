@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { Wallet, Menu, X, Sun, Moon } from 'lucide-react';
-import { Dropdown, Avatar, Space, Typography, Button, Switch } from 'antd';
+import { Dropdown, Avatar, Space, Typography, Switch } from 'antd';
 import {
   HomeOutlined,
   BarChartOutlined,
@@ -9,8 +9,7 @@ import {
   SettingOutlined,
   LogoutOutlined,
   UserOutlined,
-  DownOutlined,
-  BulbOutlined
+  DownOutlined
 } from '@ant-design/icons';
 import { useTheme } from '../context/ThemeContext';
 
@@ -50,10 +49,10 @@ export default function TopBar() {
             {isDarkMode ? <Sun size={16} /> : <Moon size={16} />}
             <span>{isDarkMode ? 'Light Mode' : 'Dark Mode'}</span>
           </Space>
-          <Switch 
-            size="small" 
-            checked={isDarkMode} 
-            onChange={toggleTheme} 
+          <Switch
+            size="small"
+            checked={isDarkMode}
+            onChange={toggleTheme}
           />
         </div>
       ),
@@ -83,10 +82,10 @@ export default function TopBar() {
   ];
 
   return (
-    <header 
+    <header
       className="sticky top-0 z-50 border-b transition-all duration-300"
-      style={{ 
-        backgroundColor: 'var(--color-bg-secondary)', 
+      style={{
+        backgroundColor: 'var(--color-bg-secondary)',
         borderColor: 'var(--color-border)',
         boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)'
       }}
@@ -130,11 +129,11 @@ export default function TopBar() {
           {/* User Profile Dropdown (Desktop) */}
           <div className="hidden md:flex items-center gap-6" style={{ marginRight: "20px" }}>
             <Dropdown menu={{ items: menuItems }} placement="bottomRight" arrow trigger={['click']}>
-              <div className="flex items-center gap-3 px-3 py-2 rounded-xl transition-all cursor-pointer" style={{ backgroundColor: 'var(--color-bg-primary)' }}>
+              <div className="flex items-center gap-3 px-3 py-2 rounded-xl transition-all cursor-pointer" style={{ backgroundColor: 'var(--color-bg-primary)', padding: "5px 10px" }}>
                 <Avatar
                   size="default"
                   icon={<UserOutlined />}
-                  style={{ backgroundColor: '#6c63ff' }}
+                  style={{ backgroundColor: '#f1f5f9', color: '#64748b' }}
                   src={`https://api.dicebear.com/7.x/initials/svg?seed=${userEmail}`}
                 />
                 <Text strong className="text-sm hidden lg:block" style={{ color: 'var(--color-text-primary)' }}>{userEmail.split('@')[0]}</Text>
@@ -171,7 +170,7 @@ export default function TopBar() {
                     : 'text-slate-600 hover:text-[#6c63ff]'
                   }`
                 }
-                style={{ 
+                style={{
                   backgroundColor: 'transparent',
                   color: 'var(--color-text-secondary)'
                 }}

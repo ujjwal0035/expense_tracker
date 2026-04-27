@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Table, Tag, Button, Popconfirm, Space, Typography, Input } from 'antd';
-import { Trash2, Edit2, Search, XCircle } from 'lucide-react';
+import { Table, Tag, Button, Popconfirm, Space, Typography, Input, Select } from 'antd';
+import { Trash2, Edit2, Search, XCircle, FilterX } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../services/api';
 import { useDashboard } from '../context/DashboardContext';
@@ -15,22 +15,32 @@ export default function ExpenseTable({ onDelete }) {
   const [page, setPage] = useState(0);
   const [total, setTotal] = useState(0);
   const [searchText, setSearchText] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [categories, setCategories] = useState([]);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [selectedExpense, setSelectedExpense] = useState(null);
   const limit = 10;
 
-  // Search with debounce effect
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
   useEffect(() => {
     const timer = setTimeout(() => {
       fetchExpenses();
-    }, 500);
+    }, 300);
 
     return () => clearTimeout(timer);
-  }, [searchText]);
+  }, [page, refreshTrigger, dateRange, searchText, selectedCategory]);
 
-  useEffect(() => {
-    fetchExpenses();
-  }, [page, refreshTrigger, dateRange]);
+  const fetchCategories = async () => {
+    try {
+      const { data } = await api.get('/categories/');
+      setCategories(data);
+    } catch (err) {
+      console.error('Failed to fetch categories:', err);
+    }
+  };
 
   const fetchExpenses = async () => {
     setLoading(true);
@@ -39,10 +49,11 @@ export default function ExpenseTable({ onDelete }) {
       if (dateRange.startDate) params.start_date = dateRange.startDate;
       if (dateRange.endDate) params.end_date = dateRange.endDate;
       if (searchText) params.search = searchText;
+      if (selectedCategory) params.category = selectedCategory;
 
       const { data } = await api.get('/expenses/', { params });
-      setExpenses(data);
-      setTotal(data.length === limit ? (page + 2) * limit : (page + 1) * limit);
+      setExpenses(data.items || data);
+      setTotal(data.total ?? data.length);
     } catch (err) {
       console.error('Failed to fetch expenses:', err);
     } finally {
@@ -56,7 +67,7 @@ export default function ExpenseTable({ onDelete }) {
       toast.success('Expense deleted');
       fetchExpenses();
       onDelete?.();
-    } catch (err) {
+    } catch {
       toast.error('Failed to delete expense');
     }
   };
@@ -158,11 +169,12 @@ export default function ExpenseTable({ onDelete }) {
         <div className="p-6 pb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4" style={{ marginBottom: '10px ' }}>
           <h3 className="text-xl font-bold" style={{ color: 'var(--color-text-primary)' }}>Recent Expenses</h3>
 
-          <div className="w-full sm:w-auto flex items-center gap-2">
+          <div className="w-full sm:w-auto flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
             <Input
               placeholder="Search category or description..."
               prefix={<Search size={16} style={{ color: 'var(--color-text-muted)' }} />}
               allowClear={{ clearIcon: <XCircle size={14} style={{ color: 'var(--color-text-muted)' }} /> }}
+              value={searchText}
               onChange={(e) => {
                 setSearchText(e.target.value);
                 setPage(0);
@@ -176,6 +188,30 @@ export default function ExpenseTable({ onDelete }) {
                 color: 'var(--color-text-primary)'
               }}
             />
+            <Select
+              allowClear
+              placeholder="Category"
+              value={selectedCategory || undefined}
+              onChange={(value) => {
+                setSelectedCategory(value || '');
+                setPage(0);
+              }}
+              options={categories.map((cat) => ({ label: cat.name, value: cat.name }))}
+              style={{ minWidth: 180, height: 42 }}
+            />
+            {(searchText || selectedCategory) && (
+              <Button
+                icon={<FilterX size={16} />}
+                onClick={() => {
+                  setSearchText('');
+                  setSelectedCategory('');
+                  setPage(0);
+                }}
+                style={{ height: 42, borderRadius: 12 }}
+              >
+                Clear
+              </Button>
+            )}
           </div>
         </div>
 

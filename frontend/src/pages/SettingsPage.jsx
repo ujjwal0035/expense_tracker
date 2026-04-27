@@ -1,8 +1,9 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   Card, Typography, Space, Row, Col, Avatar, Button,
-  Descriptions, Divider, Statistic, List, Tag, Tabs,
-  Modal, Form, Input, Table, Popconfirm, Select, Menu
+  Descriptions, Divider, Statistic, Tag, Tabs,
+  Modal, Form, Input, Table, Popconfirm, Select, Menu, DatePicker, InputNumber, Progress, Radio
 } from 'antd';
 import {
   UserOutlined,
@@ -23,14 +24,22 @@ import {
   SaveOutlined,
   AppstoreOutlined,
   UsergroupAddOutlined,
-  SearchOutlined
+  SearchOutlined,
+  CopyOutlined
 } from '@ant-design/icons';
+import dayjs from 'dayjs';
 import api from '../services/api';
 import toast from 'react-hot-toast';
 
 const { Title, Text, Paragraph } = Typography;
 
+const formatCurrency = (value) => {
+  const amount = Math.abs(value).toLocaleString('en-IN');
+  return value < 0 ? `-₹${amount}` : `₹${amount}`;
+};
+
 export default function SettingsPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState(null);
@@ -40,15 +49,28 @@ export default function SettingsPage() {
   const [catModalVisible, setCatModalVisible] = useState(false);
   const [editingCategory, setEditingCategory] = useState(null);
   const [adminLoading, setAdminLoading] = useState(false);
+  const [dataActionLoading, setDataActionLoading] = useState(false);
   const [newCatName, setNewCatName] = useState('');
   const [catSearch, setCatSearch] = useState('');
   const [adminTab, setAdminTab] = useState('users');
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'profile');
+  const [budgets, setBudgets] = useState([]);
+  const [budgetMonth, setBudgetMonth] = useState(dayjs());
+  const [budgetLoading, setBudgetLoading] = useState(false);
+  const [budgetMode, setBudgetMode] = useState('overall');
   const [form] = Form.useForm();
   const [catForm] = Form.useForm();
+  const [budgetForm] = Form.useForm();
 
   useEffect(() => {
     fetchData();
   }, []);
+
+  useEffect(() => {
+    if (activeTab === 'budgets') {
+      fetchBudgets();
+    }
+  }, [activeTab, budgetMonth]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -118,7 +140,7 @@ export default function SettingsPage() {
       await api.patch(`/admin/users/${userId}/role?role=${newRole}`);
       toast.success(`Role updated to ${newRole}`);
       fetchUsers();
-    } catch (err) {
+    } catch {
       toast.error('Failed to update role');
     }
   };
@@ -128,7 +150,7 @@ export default function SettingsPage() {
       await api.delete(`/admin/users/${userId}`);
       toast.success('User deleted');
       fetchUsers();
-    } catch (err) {
+    } catch {
       toast.error('Failed to delete user');
     }
   };
@@ -177,17 +199,118 @@ export default function SettingsPage() {
       await api.delete(`/categories/${id}`);
       toast.success('Category removed');
       fetchCategories();
-    } catch (err) {
+    } catch {
       toast.error('Failed to delete category');
     }
   };
 
-  const filteredCategories = useMemo(() => {
-    if (!catSearch) return categories;
-    return categories.filter(c => 
-      c.name.toLowerCase().includes(catSearch.toLowerCase())
-    );
-  }, [categories, catSearch]);
+  const fetchBudgets = async () => {
+    setBudgetLoading(true);
+    try {
+      const { data } = await api.get('/budgets/', {
+        params: { month: budgetMonth.format('YYYY-MM') },
+      });
+      setBudgets(data);
+    } catch (err) {
+      console.error('Failed to fetch budgets:', err);
+      toast.error('Failed to load budgets');
+    } finally {
+      setBudgetLoading(false);
+    }
+  };
+
+  const handleExportData = async () => {
+    setDataActionLoading(true);
+    try {
+      const { data } = await api.get('/expenses/export', { responseType: 'blob' });
+      const url = URL.createObjectURL(data);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'expenses_export.csv';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      toast.success('Expense export downloaded');
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Failed to export expenses');
+    } finally {
+      setDataActionLoading(false);
+    }
+  };
+
+  const handleClearData = () => {
+    Modal.confirm({
+      title: 'Clear all expense data?',
+      content: 'This will permanently delete every expense in your account. This action cannot be undone.',
+      okText: 'Clear Data',
+      okButtonProps: { danger: true },
+      centered: true,
+      onOk: async () => {
+        setDataActionLoading(true);
+        try {
+          await api.delete('/expenses/clear');
+          toast.success('All expenses cleared');
+          fetchData();
+        } catch (err) {
+          toast.error(err.response?.data?.detail || 'Failed to clear expenses');
+        } finally {
+          setDataActionLoading(false);
+        }
+      },
+    });
+  };
+
+  const handleCloneBudgets = async () => {
+    setBudgetLoading(true);
+    try {
+      const { data } = await api.post('/budgets/clone', null, {
+        params: { target_month: budgetMonth.format('YYYY-MM') },
+      });
+      toast.success(data.message);
+      fetchBudgets();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Failed to clone budgets');
+    } finally {
+      setBudgetLoading(false);
+    }
+  };
+
+  const handleCreateBudget = async (values) => {
+    try {
+      await api.post('/budgets/', {
+        category: budgetMode === 'category' ? values.category : null,
+        month: budgetMonth.format('YYYY-MM'),
+        amount: values.amount,
+      });
+      toast.success('Budget added');
+      budgetForm.resetFields();
+      fetchBudgets();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Failed to add budget');
+    }
+  };
+
+  const handleUpdateBudget = async (budgetId, amount) => {
+    try {
+      await api.patch(`/budgets/${budgetId}`, { amount });
+      toast.success('Budget updated');
+      fetchBudgets();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Failed to update budget');
+    }
+  };
+
+  const handleDeleteBudget = async (budgetId) => {
+    try {
+      await api.delete(`/budgets/${budgetId}`);
+      toast.success('Budget deleted');
+      fetchBudgets();
+    } catch {
+      toast.error('Failed to delete budget');
+    }
+  };
+
 
   const userColumns = [
     {
@@ -195,7 +318,11 @@ export default function SettingsPage() {
       key: 'user',
       render: (record) => (
         <Space>
-          <Avatar src={`https://api.dicebear.com/7.x/initials/svg?seed=${record.full_name}`} size="small" />
+          <Avatar 
+            src={`https://api.dicebear.com/7.x/initials/svg?seed=${record.full_name}`} 
+            size="small" 
+            style={{ backgroundColor: '#f1f5f9', color: '#64748b' }}
+          />
           <div>
             <div style={{ fontWeight: 'bold', color: 'var(--color-text-primary)' }}>{record.full_name}</div>
             <div style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>{record.email}</div>
@@ -261,6 +388,171 @@ export default function SettingsPage() {
     }
   ];
 
+  const budgetColumns = [
+    {
+      title: 'Category',
+      dataIndex: 'category',
+      key: 'category',
+      render: (text, record) => (
+        <Space>
+          <Tag color={record.budget_type === 'overall' ? 'blue' : 'purple'} style={{ borderRadius: 8 }}>
+            {record.budget_type === 'overall' ? 'Overall' : 'Category'}
+          </Tag>
+          <Text strong style={{ color: 'var(--color-text-primary)' }}>
+            {record.budget_type === 'overall' ? 'All Categories' : text}
+          </Text>
+        </Space>
+      ),
+    },
+    {
+      title: 'Budget',
+      dataIndex: 'amount',
+      key: 'amount',
+      render: (amount, record) => (
+        <InputNumber
+          min={1}
+          precision={2}
+          prefix="₹"
+          defaultValue={amount}
+          onPressEnter={(event) => handleUpdateBudget(record.id, Number(event.target.value.replace(/[^0-9.]/g, '')))}
+          onBlur={(event) => handleUpdateBudget(record.id, Number(event.target.value.replace(/[^0-9.]/g, '')))}
+          style={{ width: 160 }}
+        />
+      ),
+    },
+    {
+      title: 'Used',
+      key: 'used',
+      render: (record) => {
+        const color = record.status === 'over' ? '#ef4444' : record.status === 'warning' ? '#f59e0b' : '#10b981';
+        return (
+          <div style={{ minWidth: 220 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+              <Text style={{ color: 'var(--color-text-secondary)' }}>₹{record.spent.toLocaleString('en-IN')}</Text>
+              <Text style={{ color }}>{record.percentage}%</Text>
+            </div>
+            <Progress percent={Math.min(record.percentage, 100)} showInfo={false} strokeColor={color} />
+          </div>
+        );
+      },
+    },
+    {
+      title: 'Remaining',
+      key: 'remaining',
+      render: (record) => {
+        const remaining = Number(record.amount || 0) - Number(record.spent || 0);
+        return (
+          <Text style={{ color: remaining < 0 ? '#ef4444' : 'var(--color-text-primary)' }}>
+            {formatCurrency(remaining)}
+          </Text>
+        );
+      },
+    },
+    {
+      title: 'Actions',
+      key: 'actions',
+      align: 'right',
+      render: (record) => (
+        <Popconfirm title="Delete this budget?" onConfirm={() => handleDeleteBudget(record.id)}>
+          <Button type="text" danger icon={<DeleteOutlined />} />
+        </Popconfirm>
+      ),
+    },
+  ];
+
+  const budgetContent = (
+    <Card style={{ borderRadius: '24px', borderColor: 'var(--color-border)' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <Title level={4} style={{ margin: 0, color: 'var(--color-text-primary)' }}>Monthly Budgets</Title>
+              <Tag color="blue" style={{ borderRadius: '8px', fontSize: '14px', padding: '2px 10px' }}>
+                Total: ₹{budgets.reduce((sum, b) => sum + (b.amount || 0), 0).toLocaleString('en-IN')}
+              </Tag>
+            </div>
+            <Text style={{ color: 'var(--color-text-secondary)' }}>Set category limits and track monthly progress</Text>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <Popconfirm
+              title="Clone budgets?"
+              description="This will copy all budget settings from the previous month. Only new categories will be added."
+              onConfirm={handleCloneBudgets}
+              okText="Yes, Clone"
+              cancelText="No"
+              disabled={budgetLoading || budgets.length > 0}
+            >
+              <Button 
+                icon={<CopyOutlined />} 
+                disabled={budgetLoading || budgets.length > 0}
+                style={{ height: 40, borderRadius: 12 }}
+                className="font-medium"
+              >
+                Copy Previous
+              </Button>
+            </Popconfirm>
+            <DatePicker
+              picker="month"
+              value={budgetMonth}
+              onChange={(value) => setBudgetMonth(value || dayjs())}
+              format="MMMM YYYY"
+              style={{ width: 180, borderRadius: 12, height: 40 }}
+            />
+          </div>
+        </div>
+
+        <Form
+          form={budgetForm}
+          layout="inline"
+          onFinish={handleCreateBudget}
+          style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'flex-end' }}
+        >
+          <Form.Item label="Budget Type">
+            <Radio.Group
+              value={budgetMode}
+              onChange={(event) => {
+                setBudgetMode(event.target.value);
+                budgetForm.setFieldsValue({ category: undefined });
+              }}
+              optionType="button"
+              buttonStyle="solid"
+              options={[
+                { label: 'Overall', value: 'overall' },
+                { label: 'Category', value: 'category' },
+              ]}
+            />
+          </Form.Item>
+          {budgetMode === 'category' && (
+            <Form.Item name="category" label="Category" rules={[{ required: true, message: 'Choose a category' }]}>
+              <Select
+                placeholder="Select category"
+                style={{ width: 220 }}
+                options={categories.map((cat) => ({ label: cat.name, value: cat.name }))}
+              />
+            </Form.Item>
+          )}
+          <Form.Item name="amount" label="Monthly Limit" rules={[{ required: true, message: 'Enter an amount' }]}>
+            <InputNumber min={1} precision={2} prefix="₹" placeholder="0.00" style={{ width: 180 }} />
+          </Form.Item>
+          <Form.Item>
+            <Button type="primary" htmlType="submit" icon={<PlusOutlined />} style={{ background: '#6c63ff', borderColor: '#6c63ff' }}>
+              Add Budget
+            </Button>
+          </Form.Item>
+        </Form>
+
+        <Table
+          dataSource={budgets}
+          columns={budgetColumns}
+          rowKey="id"
+          loading={budgetLoading}
+          pagination={false}
+          scroll={{ x: true }}
+        />
+      </div>
+    </Card>
+  );
+
   const profileContent = (
     <Row gutter={[32, 32]}>
       <Col xs={24} lg={16}>
@@ -275,7 +567,7 @@ export default function SettingsPage() {
               <Avatar
                 size={120}
                 icon={<UserOutlined />}
-                style={{ backgroundColor: 'rgba(108, 99, 255, 0.1)', color: '#6c63ff', border: '4px solid var(--color-bg-card)', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)' }}
+                style={{ backgroundColor: '#f1f5f9', color: '#64748b', border: '4px solid var(--color-bg-card)', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)' }}
                 src={`https://api.dicebear.com/7.x/initials/svg?seed=${profile?.full_name || 'User'}`}
               />
               <div style={{ textAlign: 'left' }}>
@@ -324,6 +616,8 @@ export default function SettingsPage() {
                   <Button
                     type="primary"
                     icon={<ExportOutlined />}
+                    onClick={handleExportData}
+                    loading={dataActionLoading}
                     style={{ borderRadius: '12px', height: '40px', fontWeight: 'bold', background: '#6c63ff', borderColor: '#6c63ff' }}
                   >
                     Download CSV
@@ -336,7 +630,7 @@ export default function SettingsPage() {
                   <Paragraph style={{ fontSize: '12px', marginBottom: '16px', color: 'var(--color-text-secondary)' }}>
                     Irreversibly delete all your expense data.
                   </Paragraph>
-                  <Button danger icon={<DeleteOutlined />} style={{ borderRadius: '12px', height: '40px', fontWeight: 'bold' }}>
+                  <Button danger icon={<DeleteOutlined />} onClick={handleClearData} loading={dataActionLoading} style={{ borderRadius: '12px', height: '40px', fontWeight: 'bold' }}>
                     Clear All Data
                   </Button>
                 </div>
@@ -382,8 +676,8 @@ export default function SettingsPage() {
               <Paragraph style={{ color: 'rgba(255, 255, 255, 0.7)', marginBottom: '24px' }}>
                 Unlock advanced forecasting, multiple accounts, and custom export formats.
               </Paragraph>
-              <Button ghost block style={{ borderRadius: '12px', height: '44px', borderColor: 'rgba(255, 255, 255, 0.3)', fontWeight: 'bold' }}>
-                Upgrade to Premium
+              <Button ghost block disabled style={{ borderRadius: '12px', height: '44px', borderColor: 'rgba(255, 255, 255, 0.3)', fontWeight: 'bold' }}>
+                Premium Coming Soon
               </Button>
             </div>
           )}
@@ -432,7 +726,7 @@ export default function SettingsPage() {
                   <Title level={4} style={{ margin: 0, color: 'var(--color-text-primary)' }}>User Management</Title>
                   <Text style={{ color: 'var(--color-text-secondary)' }}>Manage user roles and platform access</Text>
                 </div>
-                <Button icon={<UsergroupAddOutlined />} style={{ borderRadius: '12px', height: '42px', padding: '0 24px' }}>Invite User</Button>
+                <Button icon={<UsergroupAddOutlined />} disabled style={{ borderRadius: '12px', height: '42px', padding: '0 24px' }}>Invite Coming Soon</Button>
               </div>
               <Table
                 dataSource={users}
@@ -516,13 +810,22 @@ export default function SettingsPage() {
       </div>
 
       <Tabs
-        defaultActiveKey="profile"
+        activeKey={activeTab}
+        onChange={(key) => {
+          setActiveTab(key);
+          setSearchParams(key === 'profile' ? {} : { tab: key });
+        }}
         className="premium-tabs"
         items={[
           {
             key: 'profile',
             label: <Space style={{ color: 'inherit' }}><UserOutlined /> Profile</Space>,
             children: profileContent
+          },
+          {
+            key: 'budgets',
+            label: <Space style={{ color: 'inherit' }}><AppstoreOutlined /> Budgets</Space>,
+            children: budgetContent
           },
           {
             key: 'security',

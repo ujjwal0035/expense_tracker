@@ -61,7 +61,7 @@ export function useSSE(jobId) {
                   setIsStreaming(false);
                   return;
                 }
-              } catch (e) {
+              } catch {
                 // Skip malformed JSON
               }
             }

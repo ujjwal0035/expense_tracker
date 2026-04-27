@@ -5,17 +5,30 @@ import { useDashboard } from '../context/DashboardContext';
 import KPIWidget from '../components/KPIWidget';
 import ExpenseTable from '../components/ExpenseTable';
 import AddExpenseModal from '../components/AddExpenseModal';
+import BudgetProgressPanel from '../components/BudgetProgressPanel';
 import api from '../services/api';
 import { Plus } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const { RangePicker } = DatePicker;
 
+const formatCurrency = (value, options = {}) => {
+  const amount = Math.abs(Number(value || 0)).toLocaleString('en-IN', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+    ...options,
+  });
+  return Number(value || 0) < 0 ? `-₹${amount}` : `₹${amount}`;
+};
+
 export default function DashboardPage() {
   const { dateRange, setDateRange, refreshTrigger, triggerRefresh } = useDashboard();
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
+  const dashboardBudgetRemaining = summary
+    ? Number(summary.total_budget || 0) - Number(summary.total_spend || 0)
+    : 0;
 
   useEffect(() => {
     fetchAnalytics();
@@ -53,6 +66,20 @@ export default function DashboardPage() {
     setDateRange({ startDate: '', endDate: '' });
   };
 
+  const applyQuickRange = (range) => {
+    const today = dayjs();
+    const ranges = {
+      month: [today.startOf('month'), today.endOf('month')],
+      last30: [today.subtract(29, 'day'), today],
+      year: [today.startOf('year'), today.endOf('year')],
+    };
+    const [start, end] = ranges[range];
+    setDateRange({
+      startDate: start.format('YYYY-MM-DD'),
+      endDate: end.format('YYYY-MM-DD'),
+    });
+  };
+
   return (
     <div className="space-y-12 animate-fade-in-up">
       {/* Page Header */}
@@ -64,6 +91,20 @@ export default function DashboardPage() {
 
         <div className="flex flex-wrap items-center gap-4">
           <Space size="middle">
+            <Button
+              className="h-[46px] rounded-xl font-semibold"
+              onClick={() => applyQuickRange('month')}
+              size="large"
+            >
+              This Month
+            </Button>
+            <Button
+              className="h-[46px] rounded-xl font-semibold"
+              onClick={() => applyQuickRange('last30')}
+              size="large"
+            >
+              Last 30 Days
+            </Button>
             <RangePicker
               className="h-[46px] rounded-xl shadow-sm"
               style={{ backgroundColor: 'var(--color-bg-primary)', borderColor: 'var(--color-border)' }}
@@ -95,46 +136,69 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* KPI Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+      {/* KPI Row - Main Stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
         <KPIWidget
           title="Total Spend"
-          value={summary ? `₹${summary.total_spend.toLocaleString('en-IN', { minimumFractionDigits: 2 })}` : '--'}
+          value={summary ? formatCurrency(summary.total_spend) : '--'}
           icon="wallet"
           color="#6c63ff"
           loading={loading}
           index={0}
         />
         <KPIWidget
-          title="Expenses"
-          value={summary ? summary.expense_count.toString() : '--'}
-          icon="receipt"
-          color="#10b981"
+          title="Total Budget"
+          value={summary ? formatCurrency(summary.total_budget) : '--'}
+          icon="target"
+          color="#3b82f6"
           loading={loading}
           index={1}
         />
         <KPIWidget
+          title="Remaining"
+          value={summary ? formatCurrency(dashboardBudgetRemaining) : '--'}
+          icon={dashboardBudgetRemaining < 0 ? 'trendingDown' : 'trending'}
+          color={dashboardBudgetRemaining < 0 ? '#ef4444' : '#10b981'}
+          loading={loading}
+          index={2}
+        />
+      </div>
+
+      {/* Secondary KPI Row */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+        <KPIWidget
+          title="Expenses"
+          value={summary ? summary.expense_count.toString() : '--'}
+          icon="receipt"
+          color="#8b5cf6"
+          loading={loading}
+          index={3}
+        />
+        <KPIWidget
           title="Top Category"
           value={summary?.top_category || '--'}
-          subtitle={summary?.top_category_amount ? `₹${summary.top_category_amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}` : ''}
+          subtitle={summary?.top_category_amount ? formatCurrency(summary.top_category_amount) : ''}
           icon="tag"
           color="#f59e0b"
           loading={loading}
-          index={2}
+          index={4}
         />
         <KPIWidget
           title="Avg / Expense"
           value={
             summary && summary.expense_count > 0
-              ? `₹${(summary.total_spend / summary.expense_count).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+              ? formatCurrency(summary.total_spend / summary.expense_count)
               : '--'
           }
           icon="calculator"
-          color="#3b82f6"
+          color="#ec4899"
           loading={loading}
-          index={3}
+          index={5}
         />
       </div>
+
+      {/* Detailed Budget Breakdown */}
+      <BudgetProgressPanel refreshTrigger={refreshTrigger} />
 
       {/* Expense Table */}
       <div className="mt-8">
