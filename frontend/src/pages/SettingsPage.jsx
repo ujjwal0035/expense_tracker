@@ -61,6 +61,12 @@ export default function SettingsPage() {
   const [form] = Form.useForm();
   const [catForm] = Form.useForm();
   const [budgetForm] = Form.useForm();
+  
+  const filteredCategories = useMemo(() => {
+    return categories.filter(cat => 
+      cat.name.toLowerCase().includes(catSearch.toLowerCase())
+    );
+  }, [categories, catSearch]);
 
   useEffect(() => {
     fetchData();
