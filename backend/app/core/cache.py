@@ -51,4 +51,4 @@ async def invalidate_user_cache(user_id: str):
             await redis_client.delete(*keys)
     elif isinstance(backend, InMemoryBackend):
         # InMemoryBackend does not support wildcard deletion easily, we clear all
-        backend._cache.clear()
+        await backend.clear()
