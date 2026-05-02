@@ -10,3 +10,5 @@ passlib[bcrypt]==1.7.4
 python-multipart==0.0.9
 pandas
 bcrypt==4.0.1
+redis==5.0.8
+fastapi-cache2==0.2.2

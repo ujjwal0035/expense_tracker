@@ -40,6 +40,8 @@ async def invalidate_user_cache(user_id: str):
     Invalidate all cached data for a specific user.
     """
     backend = FastAPICache.get_backend()
+    cache_prefix = FastAPICache.get_prefix()
+
     if isinstance(backend, RedisBackend):
         # We need to find all keys matching the user's namespace
         redis_client = backend.redis
@@ -50,5 +52,5 @@ async def invalidate_user_cache(user_id: str):
         if keys:
             await redis_client.delete(*keys)
     elif isinstance(backend, InMemoryBackend):
-        # InMemoryBackend does not support wildcard deletion easily, we clear all
-        await backend.clear()
+        # InMemoryBackend requires a namespace/key; clearing without one is a no-op.
+        await backend.clear(namespace=cache_prefix)

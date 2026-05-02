@@ -1,16 +1,17 @@
 import { useState, useEffect } from 'react';
-import { DatePicker, Button, Space } from 'antd';
+import { DatePicker, Button, Space, Empty, Progress, Typography } from 'antd';
 import dayjs from 'dayjs';
+import { useNavigate } from 'react-router-dom';
 import { useDashboard } from '../context/DashboardContext';
 import KPIWidget from '../components/KPIWidget';
 import ExpenseTable from '../components/ExpenseTable';
 import AddExpenseModal from '../components/AddExpenseModal';
-import BudgetProgressPanel from '../components/BudgetProgressPanel';
 import api from '../services/api';
 import { Plus } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const { RangePicker } = DatePicker;
+const { Text } = Typography;
 
 const formatCurrency = (value, options = {}) => {
   const amount = Math.abs(Number(value || 0)).toLocaleString('en-IN', {
@@ -22,8 +23,11 @@ const formatCurrency = (value, options = {}) => {
 };
 
 export default function DashboardPage() {
+  const navigate = useNavigate();
   const { dateRange, setDateRange, refreshTrigger, triggerRefresh } = useDashboard();
   const [summary, setSummary] = useState(null);
+  const [categoryBreakdown, setCategoryBreakdown] = useState([]);
+  const [overallBudget, setOverallBudget] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const dashboardBudgetRemaining = summary
@@ -40,9 +44,38 @@ export default function DashboardPage() {
       const params = {};
       if (dateRange.startDate) params.start_date = dateRange.startDate;
       if (dateRange.endDate) params.end_date = dateRange.endDate;
+      const budgetMonth = dateRange.startDate
+        ? dayjs(dateRange.startDate).format('YYYY-MM')
+        : dayjs().format('YYYY-MM');
 
-      const { data } = await api.get('/analytics/summary', { params });
-      setSummary(data);
+      const [summaryRes, categoryRes, budgetRes] = await Promise.all([
+        api.get('/analytics/summary', {
+          params,
+          headers: { 'Cache-Control': 'no-cache' },
+        }),
+        api.get('/analytics/category-breakdown', {
+          params,
+          headers: { 'Cache-Control': 'no-cache' },
+        }),
+        api.get('/budgets/', { params: { month: budgetMonth } }),
+      ]);
+
+      const budgetsByCategory = new Map(
+        budgetRes.data
+          .filter((budget) => budget.budget_type === 'category' && budget.category)
+          .map((budget) => [budget.category, budget])
+      );
+
+      setSummary(summaryRes.data);
+      setOverallBudget(budgetRes.data.find((budget) => budget.budget_type === 'overall') || null);
+      setCategoryBreakdown(
+        [...categoryRes.data].sort((a, b) => Number(b.total || 0) - Number(a.total || 0))
+          .map((item) => ({
+            ...item,
+            budget: budgetsByCategory.get(item.category) || null,
+          }))
+          .slice(0, 5)
+      );
     } catch (err) {
       console.error('Failed to fetch analytics:', err);
       toast.error(err.response?.data?.detail || 'Failed to load dashboard data');
@@ -65,6 +98,14 @@ export default function DashboardPage() {
   const clearFilters = () => {
     setDateRange({ startDate: '', endDate: '' });
   };
+
+  const selectedPeriodLabel = dateRange.startDate && dateRange.endDate
+    ? `${dayjs(dateRange.startDate).format('DD MMM YYYY')} - ${dayjs(dateRange.endDate).format('DD MMM YYYY')}`
+    : 'All Time';
+  const maxCategorySpend = categoryBreakdown.reduce(
+    (max, item) => Math.max(max, Number(item.total || 0)),
+    0
+  );
 
   const applyQuickRange = (range) => {
     const today = dayjs();
@@ -197,8 +238,86 @@ export default function DashboardPage() {
         />
       </div>
 
-      {/* Detailed Budget Breakdown */}
-      <BudgetProgressPanel refreshTrigger={refreshTrigger} />
+      {/* Category Spending Breakdown */}
+      <div className="glass-card p-6" style={{ backgroundColor: 'var(--color-bg-card)' }}>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+          <div>
+            <h3 className="text-xl font-bold" style={{ color: 'var(--color-text-primary)' }}>Top 5 Spend Categories</h3>
+            <Text style={{ color: 'var(--color-text-secondary)' }}>{selectedPeriodLabel}</Text>
+          </div>
+          <div className="flex flex-col sm:items-end gap-2">
+            <Text strong style={{ color: '#6c63ff', display: 'block' }}>
+              {summary ? formatCurrency(summary.total_spend) : '--'}
+            </Text>
+            <Text style={{ color: 'var(--color-text-muted)', fontSize: 12 }}>
+              {overallBudget ? `${formatCurrency(overallBudget.amount)} monthly budget` : 'No overall budget'}
+            </Text>
+            <Button onClick={() => navigate('/settings?tab=budgets')} style={{ borderRadius: 12 }}>
+              Manage Budgets
+            </Button>
+          </div>
+        </div>
+
+        {!loading && categoryBreakdown.length === 0 ? (
+          <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="No spending categories for this period" />
+        ) : (
+          <Space direction="vertical" className="w-full" size="middle">
+            {categoryBreakdown.map((item, index) => {
+              const budgetAmount = Number(item.budget?.amount || 0);
+              const spentAmount = Number(item.total || 0);
+              const remaining = budgetAmount - spentAmount;
+              const budgetUsage = budgetAmount > 0 ? Math.round((spentAmount / budgetAmount) * 100) : 0;
+              const budgetColor = remaining < 0 ? '#ef4444' : budgetUsage >= 80 ? '#f59e0b' : '#10b981';
+              const rankBarPercent = maxCategorySpend > 0
+                ? Math.round((spentAmount / maxCategorySpend) * 100)
+                : 0;
+
+              return (
+              <div key={item.category}>
+                <div className="flex items-center justify-between gap-4 mb-2">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <span
+                      className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-xs font-bold"
+                      style={{
+                        backgroundColor: index === 0 ? '#f59e0b' : 'var(--color-bg-primary)',
+                        color: index === 0 ? '#ffffff' : 'var(--color-text-secondary)',
+                      }}
+                    >
+                      {index + 1}
+                    </span>
+                    <Text strong style={{ color: 'var(--color-text-primary)' }}>
+                      {item.category}
+                    </Text>
+                  </div>
+                  <Text style={{ color: 'var(--color-text-secondary)' }}>
+                    {formatCurrency(item.total)}
+                  </Text>
+                </div>
+                <Progress
+                  percent={rankBarPercent}
+                  strokeColor={index === 0 ? '#f59e0b' : '#6c63ff'}
+                  trailColor="var(--color-bg-primary)"
+                  showInfo={false}
+                />
+                <div className="mt-2 grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <Text style={{ color: 'var(--color-text-muted)', fontSize: 12 }}>
+                    {item.percentage}% of spend
+                  </Text>
+                  <Text style={{ color: 'var(--color-text-muted)', fontSize: 12 }}>
+                    Budget: {budgetAmount > 0 ? formatCurrency(budgetAmount) : 'Not set'}
+                  </Text>
+                  <Text style={{ color: budgetAmount > 0 ? budgetColor : 'var(--color-text-muted)', fontSize: 12 }}>
+                    {budgetAmount > 0
+                      ? `${formatCurrency(Math.abs(remaining))} ${remaining < 0 ? 'over' : 'left'} (${budgetUsage}% used)`
+                      : 'Set budget in Settings'}
+                  </Text>
+                </div>
+              </div>
+              );
+            })}
+          </Space>
+        )}
+      </div>
 
       {/* Expense Table */}
       <div className="mt-8">

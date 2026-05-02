@@ -17,7 +17,7 @@ export default function ExecutiveDashboard({ isEmbedded = false }) {
   const { refreshTrigger } = useDashboard();
   
   const [dateRange, setDateRange] = useState([
-    dayjs().subtract(6, 'months').startOf('month'),
+    dayjs().startOf('month'),
     dayjs().endOf('month')
   ]);
 
