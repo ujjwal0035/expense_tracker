@@ -1,13 +1,20 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { DatePicker, Space, Button, Card, Tabs, Table, Progress, Typography, Row, Col, Select } from 'antd';
 import dayjs from 'dayjs';
 import { useDashboard } from '../context/DashboardContext';
-import CategoryPieChart from '../components/CategoryPieChart';
-import MonthlyTrendLine from '../components/MonthlyTrendLine';
+import { useQuery } from '@tanstack/react-query';
 import api from '../services/api';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Cell, Legend } from 'recharts';
-import { CalendarOutlined, BarChartOutlined, LineChartOutlined, PieChartOutlined } from '@ant-design/icons';
+import { CalendarOutlined, BarChartOutlined, LineChartOutlined, PieChartOutlined, ExperimentOutlined, CompassOutlined, CrownOutlined } from '@ant-design/icons';
 import { useTheme } from '../context/ThemeContext';
+
+import D3BarChart from '../components/D3BarChart';
+import D3PieChart from '../components/D3PieChart';
+import D3TrendLine from '../components/D3TrendLine';
+import D3StackedBar from '../components/D3StackedBar';
+
+import D3VisualsPage from './D3VisualsPage';
+import D3ForecastingPage from './D3ForecastingPage';
+import ExecutiveDashboard from './ExecutiveDashboard';
 
 const { RangePicker } = DatePicker;
 const { Title, Text } = Typography;
@@ -21,38 +28,37 @@ const COLORS = [
 export default function AnalysisPage() {
   const { dateRange, setDateRange, refreshTrigger } = useDashboard();
   const { isDarkMode } = useTheme();
-  const [summary, setSummary] = useState(null);
-  const [categoryData, setCategoryData] = useState([]);
-  const [stackedData, setStackedData] = useState({ data: [], categories: [] });
-  const [loading, setLoading] = useState(true);
   const [groupBy, setGroupBy] = useState('month');
 
-  useEffect(() => {
-    fetchAnalytics();
-  }, [dateRange, refreshTrigger, groupBy]);
-
+  // React Query Fetcher
   const fetchAnalytics = async () => {
-    setLoading(true);
-    try {
-      const params = { group_by: groupBy };
-      if (dateRange.startDate) params.start_date = dateRange.startDate;
-      if (dateRange.endDate) params.end_date = dateRange.endDate;
+    const params = { group_by: groupBy };
+    if (dateRange.startDate) params.start_date = dateRange.startDate;
+    if (dateRange.endDate) params.end_date = dateRange.endDate;
 
-      const [summaryRes, categoryRes, stackedRes] = await Promise.all([
-        api.get('/analytics/summary', { params }),
-        api.get('/analytics/category-breakdown', { params }),
-        api.get('/analytics/stacked-data', { params }),
-      ]);
+    const [summaryRes, categoryRes, stackedRes] = await Promise.all([
+      api.get('/analytics/summary', { params }),
+      api.get('/analytics/category-breakdown', { params }),
+      api.get('/analytics/stacked-data', { params }),
+    ]);
 
-      setSummary(summaryRes.data);
-      setCategoryData(categoryRes.data);
-      setStackedData(stackedRes.data);
-    } catch (err) {
-      console.error('Failed to fetch analytics:', err);
-    } finally {
-      setLoading(false);
-    }
+    return {
+      summary: summaryRes.data,
+      categoryData: categoryRes.data,
+      stackedData: stackedRes.data
+    };
   };
+
+  const { data, isLoading } = useQuery({
+    queryKey: ['analytics', dateRange, groupBy, refreshTrigger],
+    queryFn: fetchAnalytics,
+    keepPreviousData: true
+  });
+
+  const summary = data?.summary || null;
+  const categoryData = data?.categoryData || [];
+  const stackedData = data?.stackedData || { data: [], categories: [] };
+  const loading = isLoading;
 
   const handleDateChange = (dates) => {
     if (!dates) {
@@ -119,7 +125,7 @@ export default function AnalysisPage() {
   const tabItems = [
     {
       key: 'visual',
-      label: <Space style={{ color: 'inherit' }}><BarChartOutlined /> Visual Analytics</Space>,
+      label: <Space style={{ color: 'inherit' }}><BarChartOutlined /> Basic Visuals</Space>,
       children: (
         <div className="space-y-10" style={{ marginBottom: "20px" }}>
           <Row gutter={[32, 32]}>
@@ -130,36 +136,9 @@ export default function AnalysisPage() {
                 className="shadow-sm h-full"
               >
                 <div className="h-[350px] w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={categoryData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDarkMode ? '#334155' : '#f1f5f9'} />
-                      <XAxis
-                        dataKey="category"
-                        angle={-45}
-                        textAnchor="end"
-                        interval={0}
-                        height={60}
-                        tick={{ fontSize: 10, fill: isDarkMode ? '#94a3b8' : '#64748b' }}
-                      />
-                      <YAxis tick={{ fontSize: 10, fill: isDarkMode ? '#94a3b8' : '#64748b' }} tickFormatter={(v) => `₹${v}`} />
-                      <RechartsTooltip
-                        contentStyle={{
-                          backgroundColor: 'var(--color-bg-card)',
-                          borderRadius: '12px',
-                          border: '1px solid var(--color-border)',
-                          boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)',
-                          color: 'var(--color-text-primary)'
-                        }}
-                        itemStyle={{ color: 'var(--color-text-primary)' }}
-                        formatter={(value) => [`₹${value.toLocaleString('en-IN')}`, 'Spend']}
-                      />
-                      <Bar dataKey="total" radius={[8, 8, 0, 0]} barSize={32}>
-                        {categoryData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
+                  {categoryData.length > 0 ? (
+                    <D3BarChart data={categoryData} />
+                  ) : <div className="flex items-center justify-center h-full"><Text type="secondary">No data available.</Text></div>}
                 </div>
               </Card>
             </Col>
@@ -169,8 +148,10 @@ export default function AnalysisPage() {
                 style={{ borderRadius: '24px', borderColor: 'var(--color-border)' }}
                 className="shadow-sm h-full"
               >
-                <div className="h-[350px]">
-                  <CategoryPieChart data={categoryData} loading={loading} />
+                <div className="h-[350px] w-full">
+                  {categoryData.length > 0 ? (
+                    <D3PieChart data={categoryData} />
+                  ) : <div className="flex items-center justify-center h-full"><Text type="secondary">No data available.</Text></div>}
                 </div>
               </Card>
             </Col>
@@ -185,8 +166,10 @@ export default function AnalysisPage() {
                 style={{ borderRadius: '24px', borderColor: 'var(--color-border)' }}
                 className="shadow-sm h-full"
               >
-                <div className="h-[400px]">
-                  <MonthlyTrendLine data={summary?.monthly_breakdown || []} loading={loading} />
+                <div className="h-[400px] w-full">
+                  {summary?.monthly_breakdown?.length > 0 ? (
+                    <D3TrendLine data={summary.monthly_breakdown} />
+                  ) : <div className="flex items-center justify-center h-full"><Text type="secondary">No data available.</Text></div>}
                 </div>
               </Card>
             </Col>
@@ -197,37 +180,9 @@ export default function AnalysisPage() {
                 className="shadow-sm h-full"
               >
                 <div className="h-[400px] w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={stackedData.data} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDarkMode ? '#334155' : '#f1f5f9'} />
-                      <XAxis
-                        dataKey="period"
-                        tick={{ fontSize: 12, fill: isDarkMode ? '#94a3b8' : '#64748b' }}
-                      />
-                      <YAxis tick={{ fontSize: 12, fill: isDarkMode ? '#94a3b8' : '#64748b' }} tickFormatter={(v) => `₹${v}`} />
-                      <RechartsTooltip
-                        contentStyle={{
-                          backgroundColor: 'var(--color-bg-card)',
-                          borderRadius: '12px',
-                          border: '1px solid var(--color-border)',
-                          boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)',
-                          color: 'var(--color-text-primary)'
-                        }}
-                        itemStyle={{ color: 'var(--color-text-primary)' }}
-                        formatter={(value, name) => [`₹${value.toLocaleString('en-IN')}`, name]}
-                      />
-                      <Legend wrapperStyle={{ paddingTop: '20px' }} />
-                      {stackedData.categories.map((cat, index) => (
-                        <Bar
-                          key={cat}
-                          dataKey={cat}
-                          stackId="a"
-                          fill={COLORS[index % COLORS.length]}
-                          radius={index === stackedData.categories.length - 1 ? [4, 4, 0, 0] : [0, 0, 0, 0]}
-                        />
-                      ))}
-                    </BarChart>
-                  </ResponsiveContainer>
+                  {stackedData?.data?.length > 0 ? (
+                    <D3StackedBar data={stackedData.data} categories={stackedData.categories} />
+                  ) : <div className="flex items-center justify-center h-full"><Text type="secondary">No data available.</Text></div>}
                 </div>
               </Card>
             </Col>
@@ -249,6 +204,27 @@ export default function AnalysisPage() {
           />
         </Card>
       )
+    },
+    {
+      key: 'd3playground',
+      label: <Space style={{ color: 'inherit' }}><ExperimentOutlined /> D3 Playground</Space>,
+      children: (
+        <D3VisualsPage isEmbedded={true} />
+      )
+    },
+    {
+      key: 'forecast',
+      label: <Space style={{ color: 'inherit' }}><CompassOutlined /> Forecast</Space>,
+      children: (
+        <D3ForecastingPage isEmbedded={true} />
+      )
+    },
+    {
+      key: 'executive',
+      label: <Space style={{ color: 'inherit' }}><CrownOutlined /> Executive Board</Space>,
+      children: (
+        <ExecutiveDashboard isEmbedded={true} />
+      )
     }
   ];
 
@@ -257,8 +233,8 @@ export default function AnalysisPage() {
       {/* Page Header */}
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6" style={{ marginTop: '20px' }}>
         <div>
-          <h1 className="text-3xl font-bold" style={{ color: 'var(--color-text-primary)' }}>Analytics</h1>
-          <p style={{ color: 'var(--color-text-secondary)' }}>Comprehensive view of your financial ecosystem</p>
+          <h1 className="text-3xl font-bold" style={{ color: 'var(--color-text-primary)' }}>Analytics Hub</h1>
+          <p style={{ color: 'var(--color-text-secondary)' }}>Comprehensive D3 ecosystem of your finances</p>
         </div>
 
         <div className="flex flex-wrap items-center gap-4">

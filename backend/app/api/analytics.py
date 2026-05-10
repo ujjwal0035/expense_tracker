@@ -11,12 +11,15 @@ from app.models.user import User
 from app.models.expense import Expense
 from app.models.budget import Budget
 from app.schemas.expense import AnalyticsSummary, CategoryBreakdown, DailySummary, MonthlySummary
+from fastapi_cache.decorator import cache
+from app.core.cache import user_key_builder
 
 router = APIRouter(prefix="/api/v1/analytics", tags=["Analytics"])
 OVERALL_BUDGET_CATEGORY = "__overall__"
 
 
 @router.get("/summary", response_model=AnalyticsSummary)
+@cache(expire=3600, key_builder=user_key_builder)
 async def get_summary(
     start_date: Optional[date] = Query(None),
     end_date: Optional[date] = Query(None),
@@ -164,6 +167,7 @@ async def get_summary(
 
 
 @router.get("/category-breakdown", response_model=list[CategoryBreakdown])
+@cache(expire=3600, key_builder=user_key_builder)
 async def get_category_breakdown(
     start_date: Optional[date] = Query(None),
     end_date: Optional[date] = Query(None),
@@ -212,6 +216,7 @@ async def get_category_breakdown(
 
 
 @router.get("/stacked-data")
+@cache(expire=3600, key_builder=user_key_builder)
 async def get_stacked_data(
     start_date: Optional[date] = Query(None),
     end_date: Optional[date] = Query(None),

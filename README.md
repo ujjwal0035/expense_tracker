@@ -35,3 +35,41 @@ npm run dev
 The frontend will run on `http://localhost:5173`. Open this URL in your browser to access the ExpenseIQ dashboard.
 
 For detailed setup instructions, including environment variables and database migrations, please refer to the respective `README.md` files in the `frontend` and `backend` directories.
+
+## Run with Docker
+
+This repo includes a Docker Compose setup for the FastAPI backend and the production React frontend served by Nginx. The backend connects to your local PostgreSQL database on the host machine.
+
+Before starting Docker, create a local root `.env` file from the committed example:
+
+```bash
+copy .env.example .env
+```
+
+Then edit `.env` so it matches your local PostgreSQL credentials. On Docker Desktop, use `host.docker.internal` instead of `localhost`:
+
+```env
+postgresql+psycopg://postgres:1234@host.docker.internal:5432/postgres
+```
+
+The real `.env` file is ignored by Git and should not be pushed.
+
+### Start the full app
+
+```bash
+docker compose up --build
+```
+
+Then open:
+- Frontend: `http://localhost`
+- Backend API docs: `http://localhost:8000/docs`
+
+The backend container runs `alembic upgrade head` before starting the API, so any pending migrations are applied to your local PostgreSQL database.
+
+### Stop the app
+
+```bash
+docker compose down
+```
+
+For production, set `SECRET_KEY` and `DATABASE_URL` through your deployment environment or a private `.env` file. Do not commit real secrets.

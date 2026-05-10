@@ -9,7 +9,10 @@ import {
   SettingOutlined,
   LogoutOutlined,
   UserOutlined,
-  DownOutlined
+  DownOutlined,
+  ExperimentOutlined,
+  CompassOutlined,
+  CrownOutlined
 } from '@ant-design/icons';
 import { useTheme } from '../context/ThemeContext';
 

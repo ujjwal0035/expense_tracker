@@ -9,6 +9,7 @@ import SettingsPage from './pages/SettingsPage';
 import Layout from './components/Layout';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
 import { DashboardProvider } from './context/DashboardContext';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 function AppContent() {
   const { isDarkMode } = useTheme();
@@ -52,13 +53,25 @@ function AppContent() {
   );
 }
 
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutes before considering data stale
+      cacheTime: 1000 * 60 * 30, // 30 minutes cache retention
+      refetchOnWindowFocus: false, // Prevents unnecessary refetches when tabbing out
+    },
+  },
+});
+
 function App() {
   return (
-    <ThemeProvider>
-      <BrowserRouter>
-        <AppContent />
-      </BrowserRouter>
-    </ThemeProvider>
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider>
+        <BrowserRouter>
+          <AppContent />
+        </BrowserRouter>
+      </ThemeProvider>
+    </QueryClientProvider>
   );
 }
 

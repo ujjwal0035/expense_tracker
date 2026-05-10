@@ -11,6 +11,7 @@ from sqlalchemy import select, delete, func
 
 from app.core.database import get_db
 from app.core.security import get_current_user
+from app.core.cache import invalidate_user_cache
 from app.models.user import User
 from app.models.expense import Expense
 from app.schemas.expense import ExpenseCreate, ExpenseOut, ExpenseBulkCreate, ExpenseUpdate, ExpensePage
@@ -35,6 +36,8 @@ async def create_expense(
     db.add(expense)
     await db.flush()
     await db.refresh(expense)
+    await db.commit()
+    await invalidate_user_cache(str(current_user.id))
     return expense
 
 
@@ -60,6 +63,8 @@ async def create_bulk_expenses(
     await db.flush()
     for exp in expenses:
         await db.refresh(exp)
+    await db.commit()
+    await invalidate_user_cache(str(current_user.id))
     return expenses
 
 
@@ -165,6 +170,8 @@ async def clear_expenses(
 ):
     """Delete all expenses belonging to the current user."""
     await db.execute(delete(Expense).where(Expense.user_id == current_user.id))
+    await db.commit()
+    await invalidate_user_cache(str(current_user.id))
 
 
 @router.patch("/{expense_id}", response_model=ExpenseOut)
@@ -195,6 +202,7 @@ async def update_expense(
 
     await db.commit()
     await db.refresh(expense)
+    await invalidate_user_cache(str(current_user.id))
     return expense
 
 
@@ -215,3 +223,5 @@ async def delete_expense(
         raise HTTPException(status_code=404, detail="Expense not found")
     await db.delete(expense)
     await db.flush()
+    await db.commit()
+    await invalidate_user_cache(str(current_user.id))

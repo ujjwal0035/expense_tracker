@@ -95,7 +95,15 @@ async def list_budgets(
         .order_by(Budget.category)
     )
     budgets = result.scalars().all()
-    return [await to_progress(db, budget) for budget in budgets]
+    progress = [await to_progress(db, budget) for budget in budgets]
+    return sorted(
+        progress,
+        key=lambda budget: (
+            budget.budget_type != "overall",
+            -budget.spent,
+            budget.category or "",
+        ),
+    )
 
 
 @router.post("/", response_model=BudgetOut, status_code=status.HTTP_201_CREATED)

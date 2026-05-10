@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import get_settings
+from app.core.cache import init_cache
 from app.api import auth, expenses, analytics, upload, admin, categories, budgets
 
 import sys
@@ -18,6 +19,7 @@ settings = get_settings()
 async def lifespan(app: FastAPI):
     """Application lifespan: startup and shutdown hooks."""
     # Startup
+    await init_cache()
     yield
     # Shutdown — dispose engine
     from app.core.database import engine
